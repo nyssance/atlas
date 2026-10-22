@@ -3,6 +3,7 @@ import { compile } from "svelte/compiler";
 export default defineConfig({
   root: "examples",
   publicDir: false,
+  build: { target: "esnext", outDir: "../.browser-fixture", emptyOutDir: true },
   plugins: [
     {
       name: "atlas-svelte-fixture",

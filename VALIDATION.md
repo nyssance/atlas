@@ -70,3 +70,5 @@ User scope decision — 2026-10-22: native trackpad gestures are limited to Wry 
 All four consumers successfully installed the pinned GitHub dependency. Desktop, U and GitCub passed TypeScript checks and locked Cargo checks using the installed package; Yijoy passed Svelte checks with zero errors and warnings. Atlas passed TypeScript, 19 unit tests and its distribution build immediately before its initial commit. Earlier browser/full-suite limitations above still apply.
 
 Pushed consumer commits: Desktop `atlas` 39b4356d8; U `main` 835ef96; GitCub `main` e9f7c23; Yijoy `main` 24f8bd2.
+
+Post-release CI follow-up: generated distribution files are excluded from source lint. A CI mouse scenario observed its RTL and cursor state reset while served by the development server. Browser verification now builds the fixture and serves the static preview, removing development dependency reoptimization and hot reload from the test path. All 20 unchanged browser scenarios passed locally against the v0.1.0 distribution after this harness change; no library runtime change was required.

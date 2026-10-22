@@ -4,3 +4,5 @@ test-results/
 rust/target/
 *.tgz
 test-results-*/
+
+.browser-fixture/
