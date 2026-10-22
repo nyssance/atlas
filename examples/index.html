@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Atlas integration fixtures</title>
+    <style>
+      body {
+        margin: 0;
+        font: 16px system-ui;
+      }
+      [data-atlas] {
+        height: 400px;
+        width: 100%;
+        outline-offset: -2px;
+      }
+      [data-atlas-region] {
+        padding: 24px;
+        background: #f4f4f5;
+      }
+      [data-atlas-navigation] {
+        padding: 12px;
+        background: #ddd;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      header {
+        display: flex;
+        gap: 12px;
+        padding: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <button id="leading">Leading</button
+      ><button id="workspace">Workspace</button
+      ><button id="remove">Remove workspace</button
+      ><button id="destroy">Unmount</button><output id="state"></output>
+    </header>
+    <main id="app"></main>
+    <script type="module" src="/main.ts"></script>
+  </body>
+</html>
