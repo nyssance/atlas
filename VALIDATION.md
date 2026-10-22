@@ -1,6 +1,6 @@
 # Validation — 2026-10-22
 
-Commands were run on macOS arm64. Results refer to this development tree, not a published release.
+Commands were run on macOS arm64. Behavioral results below refer to the development tree used for the initial Git release; npm publication has not occurred.
 
 | Layer            | Evidence                                                                      | Result                                                                                                                            |
 | ---------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
@@ -43,13 +43,13 @@ U reference: `16d19174804a62207f2d0b9aebb1e6a83e9e4622`.
 
 ## Boundaries
 
-- Desktop, U, GitCub and Yijoy production layouts now consume Atlas through local package dependencies. Desktop and U no longer maintain their own input/release/hover engines or native collectors. Host business stores, overview rendering, menus, pet windows and content remain in each application.
+- Desktop, U, GitCub and Yijoy production layouts now consume Atlas through a pinned GitHub package dependency. Desktop and U no longer maintain their own input/release/hover engines or native collectors. Host business stores, overview rendering, menus, pet windows and content remain in each application.
 - Desktop browser Storybook could not collect the main-layout stories: its ACP spy mock throws `ReferenceError: PermissionRequestPayload is not defined`. The current module only uses that symbol as a type. This is not a browser-suite pass and the mock transformation problem was not repaired as part of Atlas.
 - U full frontend/engine run: 1,314 passed, two client tests failed and two unhandled client errors. Its native lib run: 177 passed, 25 failed in native bundle/workspace/legacy-extension setup (including missing native bundle configuration). These runs are not full-suite passes. Native Clippy passed. U global lint still reports errors in unrelated chat/history/other Storybook files; changed Atlas files were checked separately.
 - Yijoy’s production root uses the Svelte adapter and its existing shadcn navigation. Its CEF native runtime does not use the AppKit/Wry hook; physical native three-finger collection is not claimed for Yijoy. Pet art, animation and native pet-window lifecycle remain host responsibilities.
 - Shared native collection includes macOS AppKit/Wry and Windows Precision Touchpad HID, Tauri 3 alpha and the main window. Only macOS was compiled/tested here; Windows is source-migrated without a Windows runtime validation. Electron renderer support is tested; an Electron native three-finger collector is not supplied.
 - The test machine reports no trackpad. Hardware absence, reconnect logic and synthetic event paths are covered; no physical three-finger swipe is claimed.
-- The AGPL package is prepared locally. npm/GitHub publication and a separately executed ALwith license grant have not occurred.
+- The AGPL source and built exports are published at https://github.com/nyssance/atlas. All four consumers pin commit e58a89af72ef9e45ac958abc31d933edb97abfa2. npm publication and a separately executed ALwith license grant have not occurred.
 
 ## CEF native container experiment — 2026-10-22
 
@@ -64,3 +64,9 @@ This result rejects the outer-container proposal, not CEF trackpad support gener
 Experiment source and evidence: `/private/tmp/atlas-cef-probe/src/probe.m`, `src/main.rs`, `test.mjs`, `results.json`, `route-results.json`, and the baseline/container/restored screenshots in that directory.
 
 User scope decision — 2026-10-22: native trackpad gestures are limited to Wry for now. CEF gesture support is deferred; no further custom CEF collector is required for this delivery. Private API solutions and libraries requiring App Sandbox to be disabled are excluded. Yijoy’s production Svelte layout does not connect a native trackpad source or enable trackpad gestures; Atlas layout, mouse and keyboard support remain separate from native gesture support. This decision does not upgrade synthetic Wry coverage to physical hardware validation.
+
+## Push verification — 2026-10-22
+
+All four consumers successfully installed the pinned GitHub dependency. Desktop, U and GitCub passed TypeScript checks and locked Cargo checks using the installed package; Yijoy passed Svelte checks with zero errors and warnings. Atlas passed TypeScript, 19 unit tests and its distribution build immediately before its initial commit. Earlier browser/full-suite limitations above still apply.
+
+Pushed consumer commits: Desktop `atlas` 39b4356d8; U `main` 835ef96; GitCub `main` e9f7c23; Yijoy `main` 24f8bd2.
