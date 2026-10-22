@@ -4,6 +4,11 @@ version = "0.1.0"
 edition = "2024"
 license = "AGPL-3.0-only"
 description = "Native trackpad support for Nyssance Atlas"
+repository = "https://github.com/nyssance/atlas"
+readme = "README.md"
+keywords = ["tauri", "trackpad", "gestures", "atlas"]
+categories = ["gui"]
+include = ["src/**", "Cargo.toml", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "LICENSES/**"]
 
 [features]
 specta = ["dep:specta", "dep:tauri3-specta"]

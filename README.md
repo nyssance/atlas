@@ -161,10 +161,10 @@ const stop = connectTrackpad(atlas, tauriTrackpad(), reportError);
 atlas.update({ trackpadEnabled: savedPreference });
 ```
 
-The package includes the `atlas-tauri` crate under `rust/`. Consume the installed package rather than sibling source:
+The native bridge is distributed independently on crates.io as `atlas-tauri`. Cargo resolves it without Bun, npm or a `node_modules` directory:
 
 ```toml
-atlas-tauri = { path = "../node_modules/@nyssance/atlas/rust" }
+atlas-tauri = "0.1"
 ```
 
 Call `atlas_tauri::install(app.handle())?` on the main thread after creation of the `main` window. Register `atlas_tauri::availability::has_trackpad` in `tauri::generate_handler!`. The native collector supports macOS AppKit/Wry and Windows Precision Touchpad HID under Tauri 3 alpha. Other operating systems return unavailable. Native trackpad gestures are currently supported only in Wry hosts. CEF native trackpad gestures are deferred and unsupported; do not install the Wry view hook or connect the native gesture bridge in a CEF window. CEF hosts can still use Atlas layout, mouse panning and keyboard navigation. Private APIs and libraries requiring App Sandbox to be disabled are excluded. Focus loss resets the shared collector. Enable the crate’s optional `specta` feature to register its `TrackpadGesture` type with tauri-specta. The JS bridge accepts alternate command/event names for existing hosts. No worker or service process is introduced.
