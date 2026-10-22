@@ -1,0 +1,5 @@
+[fmt]
+ignorePatterns = ["dist/**"]
+
+[lint]
+ignorePatterns = ["dist/**"]
