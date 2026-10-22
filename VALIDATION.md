@@ -72,3 +72,7 @@ All four consumers successfully installed the pinned GitHub dependency. Desktop,
 Pushed consumer commits: Desktop `atlas` 39b4356d8; U `main` 835ef96; GitCub `main` e9f7c23; Yijoy `main` 24f8bd2.
 
 Post-release CI follow-up: generated distribution files are excluded from source lint. A CI mouse scenario observed its RTL and cursor state reset while served by the development server. Browser verification now builds the fixture and serves the static preview, removing development dependency reoptimization and hot reload from the test path. All 20 unchanged browser scenarios passed locally against the v0.1.0 distribution after this harness change; no library runtime change was required.
+
+## Independent Cargo publication — 2026-10-22
+
+`atlas-tauri` 0.1.0 was published to crates.io after a successful package verification build, 14 native tests and Clippy with the Specta feature. Desktop, U and GitCub now consume the registry dependency (`version = "0.1"`), with Specta retained in Desktop/U. All three compiled successfully using the downloaded crate. The native bridge no longer depends on a frontend package installation or a sibling source checkout. CEF support remains excluded.
