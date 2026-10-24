@@ -1,8 +1,7 @@
 import type { EmblaCarouselType } from "embla-carousel";
 import { resolveReleaseSnap, type TrackpadGesture } from "./core";
 
-/** Desktop atlas.tsx mouse panning: configurable middle/side buttons feed Embla
- * synthetic mouse events. One owner prevents overlap with native gestures. */
+/** Native gestures and mouse panning share one direct-position owner. */
 export function attachInput(
   api: EmblaCarouselType,
   blocked: () => boolean,
@@ -23,27 +22,38 @@ export function attachInput(
   let startIndex = 0;
   let startLocation = 0;
   let width = 0;
-  let releaseFrame = 0;
+  let pointerId: number | null = null;
+  let lastGestureTime = -Infinity;
   let secondaryUntil = -Infinity;
   let lastEnd = -Infinity;
   let disposed = false;
-  const forward = (type: string): void => {
-    root.dispatchEvent(
-      new MouseEvent(type, {
-        bubbles: true,
-        cancelable: true,
-        clientX: x,
-        clientY: 0,
-        button: 0,
-      }),
-    );
+  // Stop Embla while dragging: bounds and interpolation must not apply a second
+  // resistance curve or overwrite a newer input position.
+  const position = (value: number): void => {
+    const e = api.internalEngine();
+    e.animation.stop();
+    e.target.set(value);
+    e.location.set(value);
+    e.previousLocation.set(value);
+    e.offsetLocation.set(value);
+    e.scrollBody.useDuration(0).seek();
+    e.translate.to(value);
   };
-  const clearRelease = (): void => {
-    cancelAnimationFrame(releaseFrame);
-    releaseFrame = 0;
+  const drag = (displacement: number): void => {
+    const e = api.internalEngine();
+    const projected = startLocation + e.axis.direction(displacement);
+    const edge = e.limit.constrain(projected);
+    const overflow = projected - edge;
+    const limit = Math.min(64, width * 0.06);
+    position(
+      edge +
+        Math.sign(overflow) *
+          limit *
+          (1 - Math.exp((-Math.abs(overflow) * 0.18) / limit)),
+    );
+    e.eventHandler.emit("scroll");
   };
   const restore = (): void => {
-    clearRelease();
     api.scrollTo(Math.min(startIndex, api.scrollSnapList().length - 1));
   };
   const end = (cancelled: boolean): void => {
@@ -51,48 +61,41 @@ export function attachInput(
     if (owner === "mouse") root.style.cursor = previousCursor;
     owner = null;
     mouseButton = null;
-    const location = api.internalEngine().location.get();
+    const captured = pointerId;
+    pointerId = null;
+    if (captured !== null && root.hasPointerCapture(captured))
+      root.releasePointerCapture(captured);
+    const e = api.internalEngine();
+    const location = e.location.get();
     const target = cancelled
       ? startIndex
       : resolveReleaseSnap({
           startIndex,
           location,
           displacement: location - startLocation,
-          snapPoints: api.internalEngine().scrollSnaps,
+          snapPoints: e.scrollSnaps,
           viewportWidth: width,
           flickMinIndex,
         });
-    forward("mouseup");
     lastEnd = performance.now();
-    clearRelease();
-    releaseFrame = requestAnimationFrame(() => {
-      releaseFrame = 0;
-      if (!disposed)
-        api.scrollTo(Math.min(target, api.scrollSnapList().length - 1));
-    });
+    e.eventHandler.emit("pointerUp");
+    api.scrollTo(Math.min(target, api.scrollSnapList().length - 1));
+    // A tap at the existing snap has no animation to emit settle for it.
+    if (e.target.get() === e.location.get()) e.eventHandler.emit("settle");
   };
   const cancel = (): void => {
-    const interrupted = owner !== null || releaseFrame !== 0;
     if (owner) end(true);
-    clearRelease();
-    if (!disposed)
-      api.scrollTo(
-        interrupted
-          ? Math.min(startIndex, api.scrollSnapList().length - 1)
-          : api.selectedScrollSnap(),
-        true,
-      );
   };
   const begin = (kind: "trackpad" | "mouse", initialX: number): void => {
     if (owner || blocked() || performance.now() <= secondaryUntil) return;
-    clearRelease();
     width = root.clientWidth;
     if (width <= 0) return;
     startIndex = api.selectedScrollSnap();
-    startLocation = api.internalEngine().location.get();
+    startLocation = api.internalEngine().offsetLocation.get();
+    position(startLocation);
     x = initialX;
     owner = kind;
-    forward("mousedown");
+    api.internalEngine().eventHandler.emit("pointerDown");
   };
   const secondary = (): void => {
     secondaryUntil = performance.now() + 300;
@@ -119,21 +122,31 @@ export function attachInput(
     begin("mouse", event.clientX);
     if (owner === "mouse") {
       mouseButton = event.button;
+      pointerId = event.pointerId;
+      root.setPointerCapture(event.pointerId);
       previousCursor = root.style.cursor;
       root.style.cursor = "grabbing";
     }
   };
   const move = (event: PointerEvent): void => {
-    if (owner !== "mouse") return;
+    if (owner !== "mouse" || event.pointerId !== pointerId) return;
     if (blocked()) {
       cancel();
       return;
     }
-    x = event.clientX;
-    forward("mousemove");
+    const mask = mouseButton === 1 ? 4 : mouseButton === 3 ? 8 : 16;
+    if (!(event.buttons & mask)) {
+      end(false);
+      return;
+    }
+    drag(event.clientX - x);
   };
   const up = (event: PointerEvent): void => {
-    if (owner === "mouse" && event.button === mouseButton) {
+    if (
+      owner === "mouse" &&
+      event.pointerId === pointerId &&
+      event.button === mouseButton
+    ) {
       event.preventDefault();
       end(false);
     }
@@ -155,20 +168,30 @@ export function attachInput(
     root.scrollTop = 0;
   };
   const reinit = (): void => cancel();
+  const pointerCancel = (event: PointerEvent): void => {
+    if (owner === "mouse" && event.pointerId === pointerId) cancel();
+  };
   window.addEventListener("pointerdown", down, true);
   window.addEventListener("contextmenu", menu, true);
   window.addEventListener("pointermove", move);
   window.addEventListener("pointerup", up);
-  window.addEventListener("pointercancel", cancel);
+  root.addEventListener("pointercancel", pointerCancel);
+  root.addEventListener("lostpointercapture", pointerCancel);
   window.addEventListener("blur", cancel);
   root.addEventListener("scroll", scroll);
   root.addEventListener("auxclick", auxclick);
   api.on("reInit", reinit);
   return {
     gesture(event): void {
-      if (disposed || event.fingers !== 3) return;
-      if (!Number.isFinite(event.dx) || !Number.isFinite(event.dy))
-        throw new Error("Invalid trackpad delta");
+      if (disposed) return;
+      if (![event.totalDx, event.totalDy, event.ts].every(Number.isFinite))
+        throw new Error("Invalid trackpad position or timestamp");
+      if (event.ts < lastGestureTime) return;
+      lastGestureTime = event.ts;
+      if (event.fingers !== 3) {
+        if (owner === "trackpad") cancel();
+        return;
+      }
       if (blocked()) {
         cancel();
         return;
@@ -176,14 +199,13 @@ export function attachInput(
       if (event.phase === "began") {
         if (owner === "trackpad") cancel();
         begin("trackpad", 0);
+        if (owner === "trackpad") drag(event.totalDx * width);
       } else if (owner === "trackpad") {
-        if (event.phase === "changed") {
-          x += event.dx * width;
-          forward("mousemove");
-        } else if (event.phase === "ended" || event.phase === "cancelled")
-          // Native cancellation settles the measured position; explicit
-          // cancelInput restores the start (Desktop/U behavior).
+        if (event.phase === "changed") drag(event.totalDx * width);
+        else if (event.phase === "ended") {
+          drag(event.totalDx * width);
           end(false);
+        } else if (event.phase === "cancelled") cancel();
         else throw new Error("Invalid trackpad phase");
       }
     },
@@ -196,7 +218,8 @@ export function attachInput(
       window.removeEventListener("contextmenu", menu, true);
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
-      window.removeEventListener("pointercancel", cancel);
+      root.removeEventListener("pointercancel", pointerCancel);
+      root.removeEventListener("lostpointercapture", pointerCancel);
       window.removeEventListener("blur", cancel);
       root.removeEventListener("scroll", scroll);
       root.removeEventListener("auxclick", auxclick);

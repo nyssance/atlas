@@ -80,10 +80,10 @@ struct TouchFrame {
 }
 
 const ARMING_STABLE_FRAMES: u32 = 2;
-const ARMING_MOVE_EPS: f64 = 0.01;
 
 enum State {
     Idle,
+    WaitLift,
     Arming { fingers: usize, frames: u32, start: (f64, f64) },
     Tracking { fingers: usize, last: (f64, f64), total: (f64, f64), last_spread: f64, total_spread: f64 },
 }
@@ -97,37 +97,62 @@ impl Machine {
         Self { state: State::Idle }
     }
 
+    fn reset(&mut self) {
+        if !matches!(self.state, State::Idle) {
+            self.state = State::WaitLift;
+        }
+    }
+
     fn step(&mut self, f: &TouchFrame) -> Option<TrackpadGesture> {
+        // Observe all contacts, but never claim or suppress a system gesture.
+        if f.touching >= 4 || f.cancelled > 0 {
+            let next = if f.touching == 0 { State::Idle } else { State::WaitLift };
+            let previous = std::mem::replace(&mut self.state, next);
+            if let State::Tracking { fingers, total, total_spread, .. } = previous {
+                return Some(gesture(
+                    fingers,
+                    TrackpadGesturePhase::Cancelled,
+                    (0.0, 0.0),
+                    total,
+                    (0.0, total_spread),
+                    f.ts,
+                    None,
+                ));
+            }
+            return None;
+        }
         match self.state {
+            State::WaitLift => {
+                if f.touching == 0 {
+                    self.state = State::Idle;
+                }
+                None
+            }
             State::Idle => {
-                if f.cancelled == 0 && f.touching >= 3 {
+                if f.touching == 3 {
                     self.state = State::Arming { fingers: f.touching, frames: 1, start: f.centroid };
                 }
                 None
             }
             State::Arming { fingers, frames, start } => {
-                if f.cancelled > 0 || f.touching < 3 {
-                    self.state = State::Idle;
+                if f.touching < 3 {
+                    self.state = if f.touching == 0 { State::Idle } else { State::WaitLift };
                     return None;
                 }
-                if f.touching != fingers {
-                    self.state = State::Arming { fingers: f.touching, frames: 1, start: f.centroid };
-                    return None;
-                }
-                let moved = (f.centroid.0 - start.0).hypot(f.centroid.1 - start.1) > ARMING_MOVE_EPS;
-                if frames + 1 >= ARMING_STABLE_FRAMES || moved {
+                if frames + 1 >= ARMING_STABLE_FRAMES {
+                    let initial = (f.centroid.0 - start.0, f.centroid.1 - start.1);
                     self.state = State::Tracking {
                         fingers,
                         last: f.centroid,
-                        total: (0.0, 0.0),
+                        total: initial,
                         last_spread: f.spread,
                         total_spread: 0.0,
                     };
                     return Some(gesture(
                         fingers,
                         TrackpadGesturePhase::Began,
-                        (0.0, 0.0),
-                        (0.0, 0.0),
+                        initial,
+                        initial,
                         (0.0, 0.0),
                         f.ts,
                         f.device,
@@ -137,18 +162,6 @@ impl Machine {
                 None
             }
             State::Tracking { fingers, last, total, last_spread, total_spread } => {
-                if f.cancelled > 0 {
-                    self.state = State::Idle;
-                    return Some(gesture(
-                        fingers,
-                        TrackpadGesturePhase::Cancelled,
-                        (0.0, 0.0),
-                        total,
-                        (0.0, total_spread),
-                        f.ts,
-                        None,
-                    ));
-                }
                 if f.touching == 0 {
                     self.state = State::Idle;
                     return Some(gesture(
@@ -162,11 +175,7 @@ impl Machine {
                     ));
                 }
                 if f.touching != fingers {
-                    self.state = if f.touching >= 3 {
-                        State::Arming { fingers: f.touching, frames: 1, start: f.centroid }
-                    } else {
-                        State::Idle
-                    };
+                    self.state = State::WaitLift;
                     return Some(gesture(
                         fingers,
                         TrackpadGesturePhase::Ended,

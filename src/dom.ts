@@ -127,10 +127,8 @@ export function createAtlas(
       return true;
     },
     watchSlides: () => !suspended && options.watchRegions !== false,
-    // Synthetic middle-button/three-finger input produces no primary click.
-    // Embla's click suppression would otherwise swallow the next real button.
-    dragThreshold: Infinity,
-    watchDrag: (_api, event) => !event.isTrusted && event.target === root,
+    // Atlas owns dragging; real primary input remains available to content.
+    watchDrag: false,
   });
   const blocked = () =>
     suspended ||

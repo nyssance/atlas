@@ -76,3 +76,37 @@ Post-release CI follow-up: generated distribution files are excluded from source
 ## Independent Cargo publication — 2026-10-22
 
 `atlas-tauri` 0.1.0 was published to crates.io after a successful package verification build, 14 native tests and Clippy with the Specta feature. Desktop, U and GitCub now consume the registry dependency (`version = "0.1"`), with Specta retained in Desktop/U. All three compiled successfully using the downloaded crate. The native bridge no longer depends on a frontend package installation or a sibling source checkout. CEF support remains excluded.
+
+## Direct-input regression (2026-10-25)
+
+- Type checking, production build, and 19 core/station unit tests passed.
+- 23 Chromium interaction tests passed, including immediate cumulative-position
+  tracking, stale sample rejection, bounded/reversible edge resistance, native
+  cancellation, animation takeover, primary selection, middle/side mouse buttons,
+  RTL, and all five framework adapters.
+- Native state-machine tests cover staggered four-finger contact, three-to-four
+  cancellation, four-to-three release, partial three-finger lift, focus reset,
+  arming displacement preservation, and system cancellation.
+- Cargo clippy passed. Native event acquisition and end-to-end physical latency
+  require manual Wry testing. CEF native attachment has not been implemented or
+  measured. Browser-injected gestures are not evidence of OS gesture coexistence.
+- The installed Bun 1.4.4 binaries do not expose a built-in `lint` command; the
+  existing `lint` script recursively invokes itself, including through ts7-lint.
+  Those runs were stopped and are not recorded as successful lint checks.
+- Electron's binary download failed during test setup; the Chromium run explicitly
+  excluded the Electron test. No Electron or CEF validation is claimed here.
+
+## Release 0.1.1 verification — 2026-10-25
+
+The earlier lint and Electron setup limitations were resolved before release.
+Bun canary 1.4.4-canary.1+a8fcd319b was run with its directory first in PATH,
+so subprocesses used the same lint-capable binary. Native Bun lint and TS7 lint
+both passed. Electron's runtime installed successfully on retry.
+
+The release passed type checking, production build, 19 core/station tests,
+all 24 browser tests including Electron, 18 native tests with Specta, strict
+Clippy (`--all-targets --features specta -- -D warnings`), and Cargo publication
+dry-run package verification. An additional regression ensures an idle focus
+change does not discard the next gesture. Physical trackpad and CEF native
+limitations above remain unchanged. Frontend and native bridge versions are
+0.1.1, distributed through the existing GitHub and crates.io channels.

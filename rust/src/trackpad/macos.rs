@@ -25,7 +25,7 @@ static MAIN_VIEW: OnceLock<usize> = OnceLock::new();
 static SUPERCLASS: OnceLock<&'static AnyClass> = OnceLock::new();
 
 pub fn reset() {
-    MACHINE.with(|machine| *machine.borrow_mut() = Machine::new());
+    MACHINE.with(|machine| machine.borrow_mut().reset());
 }
 
 pub fn install(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {

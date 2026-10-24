@@ -1,6 +1,6 @@
 # Atlas
 
-Framework-independent sliding region layouts. Version 0.1.0 is distributed through GitHub Releases; npm publication is separate. Embla powers motion internally; applications depend only on `@nyssance/atlas` and never receive an Embla instance.
+Framework-independent sliding region layouts. Version 0.1.1 is distributed through GitHub Releases; npm publication is separate. Embla powers motion internally; applications depend only on `@nyssance/atlas` and never receive an Embla instance.
 
 Development uses TypeScript 7 with `ESNext` target/library types. Formatting and base lint use Bun Canary’s native commands; `bun run lint` also runs the shared `@nyssance/ts7-lint` modern-syntax rules. CI uses the same checks. Shared rules stay in that package rather than being copied into Atlas.
 
@@ -9,7 +9,7 @@ Development uses TypeScript 7 with `ESNext` target/library types. Formatting and
 Install the versioned Git release. Built JavaScript, type declarations, CSS and the native Rust crate are included; no sibling checkout or consumer-side Atlas build is required. Embla is an internal dependency and does not need to be added by applications using Atlas alone.
 
 ```sh
-bun add @nyssance/atlas@github:nyssance/atlas#v0.1.0
+bun add @nyssance/atlas@github:nyssance/atlas#v0.1.1
 ```
 
 Import `@nyssance/atlas/styles.css` once. Give the viewport a bounded height (for example a flex child inside a viewport-height shell); content must scroll inside regions rather than enlarge the application window. It contains layout only; typography, colors, borders and floating surfaces belong to the host. Frameworks and desktop runtimes are optional peers, not transitive requirements for plain DOM applications.
@@ -194,3 +194,22 @@ AGPL-3.0-only. See LICENSE and THIRD_PARTY_NOTICES.md. Separate ALwith authoriza
 ## Git distribution
 
 The repository includes built `dist/` exports so applications can pin a Git commit without depending on a sibling checkout or running package install scripts. Run `bun run build` whenever source exports change and commit the generated output together with the source.
+
+## Direct input
+
+Atlas reads native three-finger gestures without consuming macOS system events.
+Configure the system desktop-switch gesture to use four fingers. Four or more
+contacts cancel Atlas's active gesture; Atlas waits for all contacts to lift before
+recognizing another one. Partial three-finger release uses the last valid position,
+not the changed centroid of the remaining fingers.
+
+Native sources must supply `totalDx`, `totalDy`, and `ts` alongside the existing
+phase and delta fields. Totals include movement during recognition; `ts` is the
+source's monotonic timestamp. Intermediate updates may be coalesced, but lifecycle
+events must remain ordered. The bundled Rust source provides these fields.
+
+Three-finger and configured mouse-button dragging update the displayed position
+directly. Embla resumes animation only for release or cancellation. Two-finger
+scrolling and primary-button selection remain with the content. CEF native touch
+attachment is not provided by this package; the Tauri collector supports its Wry
+host and must not be presented as a verified CEF integration.

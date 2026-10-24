@@ -247,25 +247,31 @@ function attachInput(api, blocked, flickMinIndex = 0, panButton = "middle") {
   let startIndex = 0;
   let startLocation = 0;
   let width = 0;
-  let releaseFrame = 0;
+  let pointerId = null;
+  let lastGestureTime = -Infinity;
   let secondaryUntil = -Infinity;
   let lastEnd = -Infinity;
   let disposed = false;
-  const forward = (type) => {
-    root.dispatchEvent(new MouseEvent(type, {
-      bubbles: true,
-      cancelable: true,
-      clientX: x,
-      clientY: 0,
-      button: 0
-    }));
+  const position = (value) => {
+    const e = api.internalEngine();
+    e.animation.stop();
+    e.target.set(value);
+    e.location.set(value);
+    e.previousLocation.set(value);
+    e.offsetLocation.set(value);
+    e.scrollBody.useDuration(0).seek();
+    e.translate.to(value);
   };
-  const clearRelease = () => {
-    cancelAnimationFrame(releaseFrame);
-    releaseFrame = 0;
+  const drag = (displacement) => {
+    const e = api.internalEngine();
+    const projected = startLocation + e.axis.direction(displacement);
+    const edge = e.limit.constrain(projected);
+    const overflow = projected - edge;
+    const limit = Math.min(64, width * 0.06);
+    position(edge + Math.sign(overflow) * limit * (1 - Math.exp(-Math.abs(overflow) * 0.18 / limit)));
+    e.eventHandler.emit("scroll");
   };
   const restore = () => {
-    clearRelease();
     api.scrollTo(Math.min(startIndex, api.scrollSnapList().length - 1));
   };
   const end = (cancelled) => {
@@ -275,44 +281,42 @@ function attachInput(api, blocked, flickMinIndex = 0, panButton = "middle") {
       root.style.cursor = previousCursor;
     owner = null;
     mouseButton = null;
-    const location = api.internalEngine().location.get();
+    const captured = pointerId;
+    pointerId = null;
+    if (captured !== null && root.hasPointerCapture(captured))
+      root.releasePointerCapture(captured);
+    const e = api.internalEngine();
+    const location = e.location.get();
     const target = cancelled ? startIndex : resolveReleaseSnap2({
       startIndex,
       location,
       displacement: location - startLocation,
-      snapPoints: api.internalEngine().scrollSnaps,
+      snapPoints: e.scrollSnaps,
       viewportWidth: width,
       flickMinIndex
     });
-    forward("mouseup");
     lastEnd = performance.now();
-    clearRelease();
-    releaseFrame = requestAnimationFrame(() => {
-      releaseFrame = 0;
-      if (!disposed)
-        api.scrollTo(Math.min(target, api.scrollSnapList().length - 1));
-    });
+    e.eventHandler.emit("pointerUp");
+    api.scrollTo(Math.min(target, api.scrollSnapList().length - 1));
+    if (e.target.get() === e.location.get())
+      e.eventHandler.emit("settle");
   };
   const cancel = () => {
-    const interrupted = owner !== null || releaseFrame !== 0;
     if (owner)
       end(true);
-    clearRelease();
-    if (!disposed)
-      api.scrollTo(interrupted ? Math.min(startIndex, api.scrollSnapList().length - 1) : api.selectedScrollSnap(), true);
   };
   const begin = (kind, initialX) => {
     if (owner || blocked() || performance.now() <= secondaryUntil)
       return;
-    clearRelease();
     width = root.clientWidth;
     if (width <= 0)
       return;
     startIndex = api.selectedScrollSnap();
-    startLocation = api.internalEngine().location.get();
+    startLocation = api.internalEngine().offsetLocation.get();
+    position(startLocation);
     x = initialX;
     owner = kind;
-    forward("mousedown");
+    api.internalEngine().eventHandler.emit("pointerDown");
   };
   const secondary = () => {
     secondaryUntil = performance.now() + 300;
@@ -336,22 +340,28 @@ function attachInput(api, blocked, flickMinIndex = 0, panButton = "middle") {
     begin("mouse", event.clientX);
     if (owner === "mouse") {
       mouseButton = event.button;
+      pointerId = event.pointerId;
+      root.setPointerCapture(event.pointerId);
       previousCursor = root.style.cursor;
       root.style.cursor = "grabbing";
     }
   };
   const move = (event) => {
-    if (owner !== "mouse")
+    if (owner !== "mouse" || event.pointerId !== pointerId)
       return;
     if (blocked()) {
       cancel();
       return;
     }
-    x = event.clientX;
-    forward("mousemove");
+    const mask = mouseButton === 1 ? 4 : mouseButton === 3 ? 8 : 16;
+    if (!(event.buttons & mask)) {
+      end(false);
+      return;
+    }
+    drag(event.clientX - x);
   };
   const up = (event) => {
-    if (owner === "mouse" && event.button === mouseButton) {
+    if (owner === "mouse" && event.pointerId === pointerId && event.button === mouseButton) {
       event.preventDefault();
       end(false);
     }
@@ -369,21 +379,34 @@ function attachInput(api, blocked, flickMinIndex = 0, panButton = "middle") {
     root.scrollTop = 0;
   };
   const reinit = () => cancel();
+  const pointerCancel = (event) => {
+    if (owner === "mouse" && event.pointerId === pointerId)
+      cancel();
+  };
   window.addEventListener("pointerdown", down, true);
   window.addEventListener("contextmenu", menu, true);
   window.addEventListener("pointermove", move);
   window.addEventListener("pointerup", up);
-  window.addEventListener("pointercancel", cancel);
+  root.addEventListener("pointercancel", pointerCancel);
+  root.addEventListener("lostpointercapture", pointerCancel);
   window.addEventListener("blur", cancel);
   root.addEventListener("scroll", scroll);
   root.addEventListener("auxclick", auxclick);
   api.on("reInit", reinit);
   return {
     gesture(event) {
-      if (disposed || event.fingers !== 3)
+      if (disposed)
         return;
-      if (!Number.isFinite(event.dx) || !Number.isFinite(event.dy))
-        throw new Error("Invalid trackpad delta");
+      if (![event.totalDx, event.totalDy, event.ts].every(Number.isFinite))
+        throw new Error("Invalid trackpad position or timestamp");
+      if (event.ts < lastGestureTime)
+        return;
+      lastGestureTime = event.ts;
+      if (event.fingers !== 3) {
+        if (owner === "trackpad")
+          cancel();
+        return;
+      }
       if (blocked()) {
         cancel();
         return;
@@ -392,12 +415,16 @@ function attachInput(api, blocked, flickMinIndex = 0, panButton = "middle") {
         if (owner === "trackpad")
           cancel();
         begin("trackpad", 0);
+        if (owner === "trackpad")
+          drag(event.totalDx * width);
       } else if (owner === "trackpad") {
-        if (event.phase === "changed") {
-          x += event.dx * width;
-          forward("mousemove");
-        } else if (event.phase === "ended" || event.phase === "cancelled")
+        if (event.phase === "changed")
+          drag(event.totalDx * width);
+        else if (event.phase === "ended") {
+          drag(event.totalDx * width);
           end(false);
+        } else if (event.phase === "cancelled")
+          cancel();
         else
           throw new Error("Invalid trackpad phase");
       }
@@ -412,7 +439,8 @@ function attachInput(api, blocked, flickMinIndex = 0, panButton = "middle") {
       window.removeEventListener("contextmenu", menu, true);
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
-      window.removeEventListener("pointercancel", cancel);
+      root.removeEventListener("pointercancel", pointerCancel);
+      root.removeEventListener("lostpointercapture", pointerCancel);
       window.removeEventListener("blur", cancel);
       root.removeEventListener("scroll", scroll);
       root.removeEventListener("auxclick", auxclick);
@@ -473,8 +501,7 @@ function createAtlas2(root, initial = {}) {
       return true;
     },
     watchSlides: () => !suspended && options.watchRegions !== false,
-    dragThreshold: Infinity,
-    watchDrag: (_api, event) => !event.isTrusted && event.target === root
+    watchDrag: false
   });
   const blocked = () => suspended || root.closest("[inert]") !== null || !!options.blocked?.() || !!root.ownerDocument.querySelector('[role="dialog"][data-open], [role="dialog"][data-state="open"], [role="alertdialog"][data-open], [role="alertdialog"][data-state="open"], dialog[open]');
   let input = attachInput(api, blocked, options.flickMinIndex, options.panButton);

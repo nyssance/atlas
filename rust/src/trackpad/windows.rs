@@ -43,7 +43,7 @@ thread_local! {
 }
 
 pub fn reset() {
-    MACHINE.with(|machine| *machine.borrow_mut() = Machine::new());
+    MACHINE.with(|machine| machine.borrow_mut().reset());
     ASSEMBLER.with(|assembler| *assembler.borrow_mut() = FrameAssembler::new());
 }
 

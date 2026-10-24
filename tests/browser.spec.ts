@@ -57,9 +57,33 @@ test("DOM: mouse, keyboard, RTL, modal and unavailable trackpad", async ({
   await page.evaluate(() => {
     const atlas = window.atlas;
     atlas.update({ trackpadEnabled: true, trackpadAvailable: false });
-    atlas.gesture({ fingers: 3, phase: "began", dx: 0, dy: 0 });
-    atlas.gesture({ fingers: 3, phase: "changed", dx: 0.8, dy: 0 });
-    atlas.gesture({ fingers: 3, phase: "ended", dx: 0, dy: 0 });
+    atlas.gesture({
+      fingers: 3,
+      phase: "began",
+      dx: 0,
+      dy: 0,
+      totalDx: 0,
+      totalDy: 0,
+      ts: 1,
+    });
+    atlas.gesture({
+      fingers: 3,
+      phase: "changed",
+      dx: 0.8,
+      dy: 0,
+      totalDx: 0.8,
+      totalDy: 0,
+      ts: 2,
+    });
+    atlas.gesture({
+      fingers: 3,
+      phase: "ended",
+      dx: 0,
+      dy: 0,
+      totalDx: 0.8,
+      totalDy: 0,
+      ts: 3,
+    });
   });
   await expect(page.locator("#state")).toContainText(
     '"activeRegion":"workspace"',

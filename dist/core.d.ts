@@ -9,6 +9,9 @@ export interface TrackpadGesture {
     phase: "began" | "changed" | "ended" | "cancelled";
     dx: number;
     dy: number;
+    totalDx: number;
+    totalDy: number;
+    ts: number;
 }
 export interface TrackpadSource {
     available(): Promise<boolean>;

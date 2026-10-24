@@ -36,13 +36,13 @@ fn began_changed_ended_flow() {
 }
 
 #[test]
-fn four_finger_staggered_start_debounced() {
+fn four_finger_sequence_never_rearms_on_lift() {
     let mut m = Machine::new();
-    assert!(m.step(&frame(3, 0, (0.5, 0.5), 0.00)).is_none());
-    assert!(m.step(&frame(4, 0, (0.5, 0.5), 0.01)).is_none());
-    let began = m.step(&frame(4, 0, (0.5, 0.5), 0.02)).expect("expected gesture transition");
-    assert_eq!(began.phase, TrackpadGesturePhase::Began);
-    assert_eq!(began.fingers, 4);
+    for (i, count) in [3, 4, 4, 3, 3, 2, 0].into_iter().enumerate() {
+        assert!(m.step(&frame(count, 0, (0.5, 0.5), i as f64 * 0.01)).is_none());
+    }
+    assert!(m.step(&frame(3, 0, (0.5, 0.5), 0.1)).is_none());
+    assert_eq!(m.step(&frame(3, 0, (0.5, 0.5), 0.11)).unwrap().phase, TrackpadGesturePhase::Began);
 }
 
 #[test]
@@ -54,16 +54,41 @@ fn arming_move_triggers_began() {
 }
 
 #[test]
-fn finger_count_change_reopens_gesture() {
+fn fourth_finger_cancels_active_drag_until_all_lift() {
     let mut m = Machine::new();
-    m.step(&frame(4, 0, (0.5, 0.5), 0.00));
-    m.step(&frame(4, 0, (0.5, 0.5), 0.01));
-    let ended = m.step(&frame(3, 0, (0.5, 0.5), 0.02)).expect("expected gesture transition");
+    m.step(&frame(3, 0, (0.5, 0.5), 0.0));
+    m.step(&frame(3, 0, (0.5, 0.5), 0.01));
+    m.step(&frame(3, 0, (0.7, 0.5), 0.02));
+    let cancelled = m.step(&frame(4, 0, (0.9, 0.5), 0.03)).unwrap();
+    assert_eq!(cancelled.phase, TrackpadGesturePhase::Cancelled);
+    assert!((cancelled.total_dx - 0.2).abs() < 1e-9);
+    for count in [3, 3, 2, 0] {
+        assert!(m.step(&frame(count, 0, (0.5, 0.5), 0.04)).is_none());
+    }
+}
+
+#[test]
+fn partial_lift_ends_at_last_three_finger_position() {
+    let mut m = Machine::new();
+    m.step(&frame(3, 0, (0.5, 0.5), 0.0));
+    let began = m.step(&frame(3, 0, (0.55, 0.5), 0.01)).unwrap();
+    assert!((began.total_dx - 0.05).abs() < 1e-9);
+    let ended = m.step(&frame(2, 0, (0.9, 0.5), 0.02)).unwrap();
     assert_eq!(ended.phase, TrackpadGesturePhase::Ended);
-    assert_eq!(ended.fingers, 4);
-    let began = m.step(&frame(3, 0, (0.5, 0.5), 0.03)).expect("expected gesture transition");
-    assert_eq!(began.phase, TrackpadGesturePhase::Began);
-    assert_eq!(began.fingers, 3);
+    assert_eq!(ended.total_dx, began.total_dx);
+    assert!(m.step(&frame(3, 0, (0.6, 0.5), 0.03)).is_none());
+    assert!(m.step(&frame(3, 0, (0.6, 0.5), 0.04)).is_none());
+}
+
+#[test]
+fn focus_reset_does_not_start_mid_contact() {
+    let mut m = Machine::new();
+    m.step(&frame(3, 0, (0.5, 0.5), 0.0));
+    m.reset();
+    for count in [3, 3, 0, 3] {
+        assert!(m.step(&frame(count, 0, (0.5, 0.5), 0.0)).is_none());
+    }
+    assert_eq!(m.step(&frame(3, 0, (0.5, 0.5), 0.1)).unwrap().phase, TrackpadGesturePhase::Began);
 }
 
 #[test]
@@ -162,4 +187,27 @@ fn assembler_new_frame_resets_stale() {
     let out = a.push(2, vec![entry(true, 0.5), entry(true, 0.6)]).expect("expected gesture transition");
     assert_eq!(out.len(), 2);
     assert_eq!(out[0], entry(true, 0.5));
+}
+
+#[test]
+fn cancellation_waits_only_while_contacts_remain() {
+    let mut m = Machine::new();
+    m.step(&frame(3, 0, (0.5, 0.5), 0.0));
+    m.step(&frame(3, 0, (0.5, 0.5), 0.01));
+    assert_eq!(m.step(&frame(2, 1, (0.5, 0.5), 0.02)).unwrap().phase, TrackpadGesturePhase::Cancelled);
+    for count in [3, 3, 0, 3] {
+        assert!(m.step(&frame(count, 0, (0.5, 0.5), 0.03)).is_none());
+    }
+    assert_eq!(m.step(&frame(3, 0, (0.5, 0.5), 0.04)).unwrap().phase, TrackpadGesturePhase::Began);
+    assert_eq!(m.step(&frame(0, 3, (0.5, 0.5), 0.05)).unwrap().phase, TrackpadGesturePhase::Cancelled);
+    assert!(m.step(&frame(3, 0, (0.5, 0.5), 0.06)).is_none());
+    assert_eq!(m.step(&frame(3, 0, (0.5, 0.5), 0.07)).unwrap().phase, TrackpadGesturePhase::Began);
+}
+
+#[test]
+fn idle_focus_reset_does_not_discard_the_next_gesture() {
+    let mut m = Machine::new();
+    m.reset();
+    assert!(m.step(&frame(3, 0, (0.5, 0.5), 0.0)).is_none());
+    assert_eq!(m.step(&frame(3, 0, (0.5, 0.5), 0.01)).unwrap().phase, TrackpadGesturePhase::Began);
 }
