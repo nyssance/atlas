@@ -2,7 +2,7 @@
 
 Framework-independent sliding region layouts. Version 0.1.1 is distributed through GitHub Releases; npm publication is separate. Embla powers motion internally; applications depend only on `@nyssance/atlas` and never receive an Embla instance.
 
-Development uses TypeScript 7 with `ESNext` target/library types. Formatting and base lint use Bun Canary’s native commands; `bun run lint` also runs the shared `@nyssance/ts7-lint` modern-syntax rules. CI uses the same checks. Shared rules stay in that package rather than being copied into Atlas.
+Development uses TypeScript 7 with `ESNext` target/library types. Formatting and base lint use Bun Canary’s native commands; `bun lint` also runs the shared `@nyssance/ts7-lint` modern-syntax rules. CI uses the same checks. Shared rules stay in that package rather than being copied into Atlas.
 
 ## Install
 

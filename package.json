@@ -75,7 +75,6 @@
     "test": "bun test tests/core.test.ts tests/station.test.ts",
     "test:browser": "playwright test",
     "format": "bun fmt",
-    "lint": "bun lint --no-script && ts7-lint",
     "ts7-lint": "ts7-lint"
   },
   "dependencies": {
