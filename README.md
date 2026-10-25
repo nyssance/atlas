@@ -171,10 +171,6 @@ Call `atlas_tauri::install(app.handle())?` on the main thread after creation of 
 
 `observeTrackpad` can drive a settings control: disabled until a device is detected. Gestures are off by default even with hardware present. `connectTrackpad` checks again on focus and every five seconds while visible; disconnects cancel input, and late subscription cleanup is handled. Persist preferences in the host.
 
-## Electron and other hosts
-
-The DOM and framework layers run in Electron renderers without importing Electron. Keep `contextIsolation` enabled and Node integration disabled. `electronTrackpad(bridge)` accepts a narrowly scoped preload bridge implementing `TrackpadSource` (`available` and `subscribe`). Electron does not supply generic three-finger touch contacts: a host native collector must provide normalized gesture events. No hardware support is claimed when that bridge is absent; mouse and keyboard remain usable. Other webview runtimes can implement the same interface.
-
 ## Development
 
 ```sh

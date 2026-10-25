@@ -1,3 +1,9 @@
+# Current support scope — 2026-10-25
+
+Electron support has been removed: no Electron adapter, package export, runtime dependency, example or dedicated test remains. Electron results below are historical release evidence, not current support claims.
+
+After removal, `bun check`, the distribution build, all 19 core/station tests and all 23 remaining Chromium tests passed with Vite 8.3.5. `bun install --frozen-lockfile` passed; CI no longer installs Electron.
+
 # Validation — 2026-10-22
 
 Commands were run on macOS arm64. Behavioral results below refer to the development tree used for the initial Git release; npm publication has not occurred.

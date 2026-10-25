@@ -13,7 +13,6 @@ const result = await Bun.build({
     "angular",
     "svelte",
     "tauri",
-    "electron",
   ].map((name) => `src/${name}.${name === "react" ? "tsx" : "ts"}`),
   outdir: "dist",
   root: "src",
