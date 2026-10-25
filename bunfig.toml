@@ -3,3 +3,6 @@ ignorePatterns = ["dist/**"]
 
 [lint]
 ignorePatterns = ["dist/**"]
+
+[run]
+bun = true

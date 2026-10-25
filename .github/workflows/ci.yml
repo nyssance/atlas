@@ -10,7 +10,7 @@ jobs:
           bun-version: canary
       - uses: dtolnay/rust-toolchain@stable
       - run: bun install --frozen-lockfile
-      - run: bun x --no-install playwright install chromium
+      - run: bun x --bun --no-install playwright install chromium
       - run: bun run typecheck
       - run: bun run test
       - run: bun run build

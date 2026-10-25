@@ -24,7 +24,7 @@ const result = await Bun.build({
 if (!result.success)
   throw new AggregateError(result.logs, "Atlas build failed");
 const types = Bun.spawn(
-  ["bun", "x", "--no-install", "tsc", "--emitDeclarationOnly"],
+  ["bun", "x", "--bun", "--no-install", "tsc", "--emitDeclarationOnly"],
   { stdout: "inherit", stderr: "inherit" },
 );
 if ((await types.exited) !== 0)
