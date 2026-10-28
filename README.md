@@ -185,7 +185,7 @@ Browser fixtures mount React, Vue, Angular, Svelte and plain DOM against the bui
 
 ## License
 
-AGPL-3.0-only. See LICENSE and THIRD_PARTY_NOTICES.md. Separate ALwith authorization is described in ALWITH-LICENSE.md; this repository does not invent a legal recipient or silently waive third-party rights. External contributions requiring inclusion in an alternatively licensed edition need explicit relicensing permission before acceptance.
+AGPL-3.0-only. See LICENSE and THIRD_PARTY_NOTICES.md.
 
 ## Git distribution
 
