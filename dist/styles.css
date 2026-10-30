@@ -130,3 +130,12 @@
     transition: none;
   }
 }
+
+/* Surfaces sit inside region padding so rounding never paints over the gutter. */
+[data-atlas-surface] {
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: clip;
+  border-radius: var(--atlas-surface-radius, 14px);
+}

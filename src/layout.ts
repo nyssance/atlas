@@ -5,6 +5,7 @@ export const desktopDefaults = Object.freeze({
   insetBottom: 8,
   navigationWidth: 248,
   gutter: 4,
+  surfaceRadius: 14,
   navigationPinned: true,
   hoverNavigation: true,
   leadingRailWidth: 176,
@@ -19,6 +20,8 @@ export interface AtlasLayoutOptions {
   navigationWidth?: number;
   /** Fixed viewport margin and each region’s half-gap, in CSS pixels. */
   gutter?: number;
+  /** Radius of surfaces inside regions; gutters remain outside the clipped surface. */
+  surfaceRadius?: number;
   navigationPinned?: boolean;
   hoverNavigation?: boolean;
   leadingRailWidth?: number;
@@ -40,6 +43,7 @@ export function applyLayout(root: HTMLElement, options: AtlasLayoutOptions) {
     "inset-bottom": layout.insetBottom,
     "navigation-width": layout.navigationWidth,
     gutter: layout.gutter,
+    "surface-radius": layout.surfaceRadius,
     "leading-rail-width": layout.leadingRailWidth,
     "trailing-width": layout.trailingWidth,
     "station-clearance": layout.stationClearance,

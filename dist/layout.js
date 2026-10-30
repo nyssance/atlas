@@ -6,7 +6,7 @@ import {
   resolveAtlasWidths2,
   resolveSplitGeometry2,
   resolveSplitWidths2
-} from "./chunk-afm3cw6n.js";
+} from "./chunk-8mrnnw0c.js";
 export {
   MIN_BLOCK_WIDTH2 as MIN_BLOCK_WIDTH,
   MIN_PREVIEW_WIDTH2 as MIN_PREVIEW_WIDTH,

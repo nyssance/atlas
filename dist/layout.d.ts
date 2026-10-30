@@ -5,6 +5,7 @@ export declare const desktopDefaults: Readonly<{
     insetBottom: 8;
     navigationWidth: 248;
     gutter: 4;
+    surfaceRadius: 14;
     navigationPinned: true;
     hoverNavigation: true;
     leadingRailWidth: 176;
@@ -19,6 +20,8 @@ export interface AtlasLayoutOptions {
     navigationWidth?: number;
     /** Fixed viewport margin and each region’s half-gap, in CSS pixels. */
     gutter?: number;
+    /** Radius of surfaces inside regions; gutters remain outside the clipped surface. */
+    surfaceRadius?: number;
     navigationPinned?: boolean;
     hoverNavigation?: boolean;
     leadingRailWidth?: number;

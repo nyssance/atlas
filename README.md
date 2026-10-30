@@ -64,6 +64,7 @@ Defaults derive from ALwith Desktop’s shell geometry, in CSS pixels. Desktop p
 | `insetTop`           | 32               | Top inset; pass 0 if the host already reserves the title row                                          |
 | `insetBottom`        | `gutter * 2` (8) | Bottom spacing follows gutter unless explicitly overridden; 0 removes it                              |
 | `gutter`             | 4                | Shared fixed viewport margin and each region’s half-gap; 6 produces 12px visible gaps; 0 removes both |
+| `surfaceRadius`      | 14               | Radius of `[data-atlas-surface]` inside a region; 0 removes rounding without changing gutters |
 | `navigationWidth`    | 248              | Shared navigation, including gutters                                                                  |
 | `navigationPinned`   | true             | Reserve navigation beside the workspace                                                               |
 | `hoverNavigation`    | true             | When unpinned, reveal the same navigation at the start edge                                           |
@@ -209,3 +210,5 @@ directly. Embla resumes animation only for release or cancellation. Two-finger
 scrolling and primary-button selection remain with the content. CEF native touch
 attachment is not provided by this package; the Tauri collector supports its Wry
 host and must not be presented as a verified CEF integration.
+
+Place `data-atlas-surface` on a region’s inner content container to clip its background and children to `surfaceRadius`. Keep backgrounds on that surface, not on the padded region, so gutters remain visible. Atlas owns surface geometry; the host supplies colors.

@@ -108,3 +108,32 @@ for (const direction of ["ltr", "rtl"] as const) {
     expect(await bottomSpacing()).toBe(12);
   });
 }
+
+test("surface radius is configurable without consuming region gutters", async ({ page }) => {
+  await page.goto("/");
+  await page.waitForFunction(() => window.atlas);
+  await page.evaluate(() => {
+    const region = document.querySelector('[data-atlas-region="workspace"]')!;
+    const surface = document.createElement("div");
+    surface.dataset.atlasSurface = "";
+    surface.append(...region.childNodes);
+    region.append(surface);
+  });
+  for (const radius of [14, 0, 22]) {
+    if (radius !== 14) await page.evaluate(radius => window.atlas.update({ surfaceRadius: radius }), radius);
+    const geometry = await page.evaluate(() => {
+      const region = document.querySelector('[data-atlas-region="workspace"]')!;
+      const surface = region.querySelector('[data-atlas-surface]')!;
+      return {
+        radius: getComputedStyle(surface).borderRadius,
+        overflow: getComputedStyle(surface).overflow,
+        gap: surface.getBoundingClientRect().left - region.getBoundingClientRect().left,
+        top: getComputedStyle(document.querySelector('[data-atlas]')!).paddingTop,
+      };
+    });
+    expect(geometry.radius).toBe(`${radius}px`);
+    expect(geometry.overflow).toBe("clip");
+    expect(geometry.gap).toBe(4);
+    expect(geometry.top).toBe("32px");
+  }
+});
