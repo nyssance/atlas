@@ -10,9 +10,17 @@ for (const direction of ["ltr", "rtl"] as const) {
       (direction) => window.atlas.update({ direction }),
       direction,
     );
-    const toggle = page.locator("[data-atlas-overview-toggle]");
+    await page.evaluate(() => {
+      const button = document.createElement("button");
+      button.id = "separate-overview";
+      button.textContent = "Overview";
+      button.onclick = () => window.atlas.overview.toggle();
+      document.body.append(button);
+    });
+    await expect(page.locator("[data-atlas-footer-navigation] [data-atlas-overview-toggle]")).toHaveCount(0);
+    const toggle = page.locator("#separate-overview");
     await toggle.click();
-    await expect(toggle).toHaveAttribute("aria-pressed", "true");
+    expect(await page.evaluate(() => window.atlas.overview.getState() !== null)).toBe(true);
     await expect(page.locator("[data-atlas-track]").first()).toHaveAttribute(
       "inert",
       "",
@@ -24,7 +32,7 @@ for (const direction of ["ltr", "rtl"] as const) {
       .locator("[data-atlas-overview-overlay] button")
       .filter({ hasText: "leading" })
       .click();
-    await expect(toggle).toHaveAttribute("aria-pressed", "false");
+    expect(await page.evaluate(() => window.atlas.overview.getState())).toBeNull();
     await expect(
       page.locator("[data-atlas-track]").first(),
     ).not.toHaveAttribute("inert", "");
@@ -49,11 +57,10 @@ test("React overview survives state updates without a render loop", async ({
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/?framework=react");
   await expect(page.locator("html")).toHaveAttribute("data-ready", "react");
-  const toggle = page.locator("[data-atlas-overview-toggle]");
-  await toggle.click();
-  await expect(toggle).toHaveAttribute("aria-pressed", "true");
-  await toggle.click();
-  await expect(toggle).toHaveAttribute("aria-pressed", "false");
+  await page.evaluate(() => window.atlas.overview.toggle());
+  expect(await page.evaluate(() => window.atlas.overview.getState() !== null)).toBe(true);
+  await page.evaluate(() => window.atlas.overview.toggle());
+  expect(await page.evaluate(() => window.atlas.overview.getState())).toBeNull();
   expect(errors).toEqual([]);
 });
 

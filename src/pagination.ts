@@ -3,7 +3,6 @@ import type { AtlasController, AtlasGeometry } from "./dom";
 export interface AtlasPaginationOptions {
   label?: string;
   container?: HTMLElement | null | (() => HTMLElement | null);
-  overviewLabel?: string;
   pageLabel?: (index: number) => string;
 }
 export function paginationPages(geometry: AtlasGeometry) {
@@ -39,13 +38,7 @@ export function attachPagination(
   nav.dataset.atlasPageDots = "";
   const wrapper = document.createElement("div");
   wrapper.dataset.atlasFooterNavigation = "";
-  const overview = document.createElement("button");
-  overview.type = "button";
-  overview.dataset.atlasOverviewToggle = "";
-  overview.innerHTML =
-    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="5" width="7" height="14" rx="1.5"/><rect x="14" y="5" width="7" height="14" rx="1.5"/></svg>';
-  overview.onclick = () => controller.overview.toggle();
-  wrapper.append(nav, overview);
+  wrapper.append(nav);
   controller.root.append(wrapper);
   let signature = "";
   const render = () => {
@@ -59,17 +52,6 @@ export function attachPagination(
       (typeof target === "function" ? target() : target) ?? controller.root;
     if (wrapper.parentElement !== container) container.append(wrapper);
 
-    overview.hidden = !controller.overview.enabled();
-    overview.setAttribute(
-      "aria-label",
-      typeof config === "object"
-        ? (config.overviewLabel ?? "Overview")
-        : "Overview",
-    );
-    overview.setAttribute(
-      "aria-pressed",
-      String(controller.overview.getState() !== null),
-    );
     const pages = paginationPages(controller.getGeometry());
     const active = controller.getState().activeRegion;
     nav.hidden = pages.length <= 1;
@@ -125,7 +107,6 @@ export function attachPagination(
     });
   };
   const stop = controller.subscribe(render);
-  const stopOverview = controller.overview.subscribe(render);
   controller.on("reInit", render);
   const observer = new MutationObserver(render);
   observer.observe(controller.track, {
@@ -142,7 +123,6 @@ export function attachPagination(
     render,
     dispose() {
       stop();
-      stopOverview();
       controller.off("reInit", render);
       observer.disconnect();
       wrapper.remove();

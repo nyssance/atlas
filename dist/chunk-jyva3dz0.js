@@ -1,7 +1,7 @@
 // src/layout.ts
 var desktopDefaults2 = Object.freeze({
   insetTop: 32,
-  insetBottom: 24,
+  insetBottom: 32,
   navigationWidth: 248,
   gutter: 4,
   surfaceRadius: 14,
@@ -18,7 +18,7 @@ function applyLayout2(root, options) {
     if (options[key] !== undefined)
       Object.assign(layout, { [key]: options[key] });
   }
-  layout.insetBottom = options.insetBottom ?? desktopDefaults2.insetBottom;
+  layout.insetBottom = options.insetBottom ?? layout.insetTop;
   const values = {
     "inset-top": layout.insetTop,
     "inset-bottom": layout.insetBottom,

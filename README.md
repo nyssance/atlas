@@ -57,12 +57,12 @@ Every region needs a unique stable ID. The navigation node remains mounted and m
 
 Mouse panning is configured through `panButton: "middle" | "side"`, defaulting to `"middle"` as in Desktop. `"side"` accepts either back/forward mouse button. Use `atlas.update({ panButton: "side" })` to change it at runtime; an in-progress drag is cancelled when the binding changes. Hosts own any settings UI and persistence. Left-button selection and two-finger scrolling stay with content. Mark excluded drag areas with `data-no-drag`; separators are also excluded. Mouse panning does not require a trackpad.
 
-Defaults derive from ALwith Desktop’s shell geometry, in CSS pixels. Desktop panes contribute 4px on each inline side: adjacent panes give 4+4=8px, and the outer shell adds 4px to a 4px edge pane. Atlas uses that same shared gutter and reserves a separate 24px footer for page navigation. Pass options through any adapter; changes preserve the active region and mounted content.
+Defaults derive from ALwith Desktop’s shell geometry, in CSS pixels. Desktop panes contribute 4px on each inline side: adjacent panes give 4+4=8px, and the outer shell adds 4px to a 4px edge pane. Atlas uses that same shared gutter and reserves a 32px footer matching the top inset for page navigation. Pass options through any adapter; changes preserve the active region and mounted content.
 
 | Option               | Default          | Behavior                                                                                              |
 | -------------------- | ---------------- | ----------------------------------------------------------------------------------------------------- |
 | `insetTop`           | 32               | Top inset; pass 0 if the host already reserves the title row                                          |
-| `insetBottom`        | 24 | Independent footer height; 0 explicitly removes it                              |
+| `insetBottom`        | insetTop | Matches top spacing by default; 0 explicitly removes it                              |
 | `gutter`             | 4                | Shared fixed viewport margin and each region’s half-gap; 6 produces 12px visible gaps; 0 removes both |
 | `surfaceRadius`      | 14               | Radius of `[data-atlas-surface]` inside a region; 0 removes rounding without changing gutters |
 | `navigationWidth`    | 248              | Shared navigation, including gutters                                                                  |
@@ -73,7 +73,7 @@ Defaults derive from ALwith Desktop’s shell geometry, in CSS pixels. Desktop p
 | `trailingWidth`      | 264              | Width of a `data-atlas-trailing` region                                                               |
 | `stationClearance`   | 192              | Scroll clearance above the fixed station slot                                                         |
 
-`gutter` is one shared layout value, not two independently configured margins. The viewport margin stays fixed while region half-gaps move with the track. For example, `atlas.update({ gutter: 6 })` sets both to 6px, creating 12px between adjacent surfaces with their shared boundary at the center. Setting `gutter: 0` removes those gaps. An explicit `insetBottom` stays unchanged when gutter changes; set it to `undefined` to restore the 24px default. Navigation width still includes its gutters. Content padding belongs to the region's inner content and is never changed by `gutter`.
+`gutter` is one shared layout value, not two independently configured margins. The viewport margin stays fixed while region half-gaps move with the track. For example, `atlas.update({ gutter: 6 })` sets both to 6px, creating 12px between adjacent surfaces with their shared boundary at the center. Setting `gutter: 0` removes those gaps. An explicit `insetBottom` stays unchanged when gutter changes; set it to `undefined` to follow the top inset. Navigation width still includes its gutters. Content padding belongs to the region's inner content and is never changed by `gutter`.
 
 Hover needs `data-atlas-navigation-surface` inside navigation. It keeps the original DOM, uses the 4px edge and 100ms trigger intent, and retains open popups/pointer capture. A header trigger may use `data-atlas-navigation-trigger` and `aria-controls` targeting the navigation's ID. `Escape`, scrolling and teardown close the surface. Reduced-motion preferences are respected.
 
@@ -215,7 +215,7 @@ Place `data-atlas-surface` on a region’s inner content container to clip its b
 
 ### Default page navigation
 
-Atlas reserves a 24px bottom inset and renders U-style page dots outside the
+Atlas reserves a bottom inset matching the top (32px by default) and renders U-style page dots outside the
 moving track. Content snap groups participate by default. Regions marked
 `data-atlas-leading` or `data-atlas-trailing` do not; navigation never participates.
 An auxiliary region can explicitly opt in with `data-atlas-pagination="true"`,
@@ -245,7 +245,8 @@ use `controller.getPagination()`, `getState()`, `subscribe()` and `goToSnap()`.
 
 ### Live thumbnail overview and custom footers
 
-The default footer includes an overview toggle. `controller.overview.enter()`,
+Overview is independent of pagination. Applications provide a separate button;
+the default footer contains only page dots. `controller.overview.enter()`,
 `exit(regionId?)`, and `toggle()` use the existing mounted track, suspend panning,
 fit the visible panels, then restore normal input and focus. Escape exits.
 `subscribe()` reports overview geometry for host decorations. Set

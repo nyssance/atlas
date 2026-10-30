@@ -200,18 +200,6 @@
   }
 }
 
-[data-atlas-overview-toggle] {
-  display: grid;
-  place-items: center;
-  appearance: none;
-  border: 0;
-  background: transparent;
-  color: var(--foreground, currentColor);
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  cursor: pointer;
-}
 [data-atlas-overview-overlay] {
   position: absolute;
   inset: 0;
