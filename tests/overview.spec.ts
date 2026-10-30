@@ -115,48 +115,16 @@ test("custom footer and thumbnail decorations use shared state without duplicate
   );
 });
 
-test("footer double click opens shared branded overview with offline font and independent social links", async ({
-  page,
-}, testInfo) => {
+test("footer double click toggles generic overview without branding", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator("html")).toHaveAttribute("data-ready", "dom");
-  await page.evaluate(() => {
-    window.atlas.update({
-      overview: {
-        openLink: (url) => {
-          document.body.dataset.openedLink = url;
-        },
-      },
-    });
-  });
-  const root = page.locator("[data-atlas]").first();
-  const bounds = (await root.boundingBox())!;
+  const bounds = (await page.locator("[data-atlas]").first().boundingBox())!;
   await page.mouse.dblclick(bounds.x + 12, bounds.y + bounds.height - 8);
-  const brand = page.locator("[data-atlas-overview-brand]");
-  await expect(brand).toHaveText("ALwith the best AI agent !!");
-  await expect(brand).toHaveCSS("font-size", "48px");
-  await expect(brand.locator("span").first()).toHaveCSS(
-    "color",
-    "rgb(124, 58, 237)",
-  );
-  expect(
-    await page.evaluate(async () => {
-      await document.fonts.load('48px "Atlas Caveat"');
-      return document.fonts.check('48px "Atlas Caveat"');
-    }),
-  ).toBe(true);
-  await page.screenshot({ path: testInfo.outputPath("overview.png") });
-  const social = page.locator("[data-atlas-overview-social]");
-  await expect(social.getByRole("link")).toHaveCount(4);
-  await social.getByRole("link", { name: "GitHub", exact: true }).click();
-  await expect(page.locator("body")).toHaveAttribute(
-    "data-opened-link",
-    "https://github.com/ALwith-ai",
-  );
-  await expect(brand).toBeVisible();
+  expect(await page.evaluate(() => window.atlas.overview.getState())).not.toBeNull();
+  await expect(page.locator("[data-atlas-overview-overlay]")).toBeVisible();
+  await expect(page.getByText("ALwith the best AI agent", { exact: false })).toHaveCount(0);
   await page.mouse.dblclick(bounds.x + 12, bounds.y + bounds.height - 8);
-  await expect(brand).toHaveCount(0);
-  await expect(social).toHaveCount(0);
+  expect(await page.evaluate(() => window.atlas.overview.getState())).toBeNull();
 });
 
 test("external business footer toggles overview only on empty space", async ({
@@ -177,15 +145,15 @@ test("external business footer toggles overview only on empty space", async ({
     });
   });
   await page.getByRole("button", { name: "Business action" }).dblclick();
-  await expect(page.locator("[data-atlas-overview-brand]")).toHaveCount(0);
+  expect(await page.evaluate(() => window.atlas.overview.getState())).toBeNull();
   await page
     .locator("#overview-business-footer")
     .dblclick({ position: { x: 250, y: 16 } });
-  await expect(page.locator("[data-atlas-overview-brand]")).toBeVisible();
+  expect(await page.evaluate(() => window.atlas.overview.getState())).not.toBeNull();
   await page.evaluate(() => window.atlas.destroy());
-  await expect(page.locator("[data-atlas-overview-brand]")).toHaveCount(0);
+  expect(await page.evaluate(() => window.atlas.overview.getState())).toBeNull();
   await page
     .locator("#overview-business-footer")
     .dblclick({ position: { x: 250, y: 16 } });
-  await expect(page.locator("[data-atlas-overview-brand]")).toHaveCount(0);
+  expect(await page.evaluate(() => window.atlas.overview.getState())).toBeNull();
 });

@@ -17,9 +17,6 @@ export interface AtlasOverviewOptions {
     /** Host decorations may observe geometry without owning transforms. */
     onChange?: (state: AtlasOverviewState | null) => void;
     renderOverlay?: boolean;
-    /** Disable only when replacing the complete overview presentation. */
-    renderChrome?: boolean;
-    openLink?: (url: string) => void;
     /** A host footer outside the Atlas root, such as a business status bar. */
     footer?: HTMLElement | null | (() => HTMLElement | null);
 }

@@ -1,4 +1,3 @@
-import { createOverviewChrome } from "./overview-chrome";
 import type { AtlasController } from "./dom";
 
 export interface AtlasOverviewState {
@@ -15,9 +14,6 @@ export interface AtlasOverviewOptions {
   /** Host decorations may observe geometry without owning transforms. */
   onChange?: (state: AtlasOverviewState | null) => void;
   renderOverlay?: boolean;
-  /** Disable only when replacing the complete overview presentation. */
-  renderChrome?: boolean;
-  openLink?: (url: string) => void;
   /** A host footer outside the Atlas root, such as a business status bar. */
   footer?: HTMLElement | null | (() => HTMLElement | null);
 }
@@ -29,7 +25,6 @@ export function createOverview(
   const { root, track } = controller;
   let state: AtlasOverviewState | null = null;
   let overlay: HTMLElement | null = null;
-  let chrome: ReturnType<typeof createOverviewChrome> | null = null;
   let observer: ResizeObserver | null = null;
   let mutation: MutationObserver | null = null;
   let frame = 0;
@@ -122,7 +117,6 @@ export function createOverview(
           .find((button) => button.dataset.atlasOverviewTarget === focused)
           ?.focus({ preventScroll: true });
     }
-    chrome?.update(state);
     notify();
   };
   const schedule = () => {
@@ -162,14 +156,6 @@ export function createOverview(
       );
       root.append(overlay);
     }
-    if (typeof config !== "object" || config.renderChrome !== false) {
-      chrome = createOverviewChrome(root, (url) => {
-        const current = options();
-        if (typeof current === "object" && current.openLink)
-          current.openLink(url);
-        else window.open(url, "_blank", "noopener,noreferrer");
-      });
-    }
     measure();
     observer = new ResizeObserver(schedule);
     observer.observe(root);
@@ -198,8 +184,6 @@ export function createOverview(
     root.ownerDocument.removeEventListener("keydown", keydown, true);
     overlay?.remove();
     overlay = null;
-    chrome?.dispose();
-    chrome = null;
     delete root.dataset.atlasOverview;
     track.inert = inert;
     track.style.transition = transition;

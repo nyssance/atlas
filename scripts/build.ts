@@ -38,6 +38,3 @@ const types = Bun.spawn(
 if ((await types.exited) !== 0)
   throw new Error("Declaration generation failed");
 await copyFile("src/styles.css", "dist/styles.css");
-
-await mkdir("dist/assets", { recursive: true });
-await copyFile("src/assets/Caveat.woff2", "dist/assets/Caveat.woff2");
