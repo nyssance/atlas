@@ -19,7 +19,15 @@ const result = await Bun.build({
   target: "browser",
   format: "esm",
   splitting: true,
-  external: ["embla-carousel", "motion", "react", "vue", "@angular/core", "svelte", "@tauri-apps/api/*"],
+  external: [
+    "embla-carousel",
+    "motion",
+    "react",
+    "vue",
+    "@angular/core",
+    "svelte",
+    "@tauri-apps/api/*",
+  ],
 });
 if (!result.success)
   throw new AggregateError(result.logs, "Atlas build failed");
@@ -30,3 +38,6 @@ const types = Bun.spawn(
 if ((await types.exited) !== 0)
   throw new Error("Declaration generation failed");
 await copyFile("src/styles.css", "dist/styles.css");
+
+await mkdir("dist/assets", { recursive: true });
+await copyFile("src/assets/Caveat.woff2", "dist/assets/Caveat.woff2");

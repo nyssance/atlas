@@ -11,3 +11,5 @@ Hover animations incorporate Motion, motion-dom, motion-utils and Framer Motion 
 ALwith U reference commit: 16d19174804a62207f2d0b9aebb1e6a83e9e4622. Desktop hover, layout metrics and station geometry also originate from `src/features/layout/components/atlas.tsx`, `trailing-board.tsx` and `lib/vibemon-nest-drop.ts`. Framework adapters and RTL station mirroring are Atlas additions.
 
 The shared macOS observer and Windows Precision Touchpad collector derive from ALwith U `src-tauri/src/trackpad/`, including its state-machine tests; device availability detection derives from Desktop `src-tauri/src/commands/trackpad.rs`. The collector preserves the native view superclass chain and resets on main-window focus loss.
+
+Caveat is copyright 2014 The Caveat Project Authors and distributed under SIL OFL 1.1 (LICENSES/Caveat-OFL.txt). Social icons come from Simple Icons under CC0 (LICENSES/Simple-Icons-CC0.txt).

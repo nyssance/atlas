@@ -262,3 +262,5 @@ element or a function returning one) to mount the default navigation in that bar
 A completely custom renderer uses `pagination: false` and the controller's
 geometry/navigation APIs; no second hidden navigation is created. Desktop's
 proportional segment strip and business status items remain host-owned.
+
+The default overview includes Desktop’s Caveat title and four social links. The font is bundled for offline use. Double-click empty footer space to toggle overview; interactive footer controls retain their own gestures. Hosts with an external business footer pass `overview.footer` as an element or getter. Desktop hosts pass `overview.openLink` to open social URLs in the system browser. `renderOverlay: false` replaces thumbnail targets only; `renderChrome: false` replaces the title and social presentation. These are independent of page dots.

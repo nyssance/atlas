@@ -34,7 +34,7 @@
 [data-atlas] {
   position: relative;
   box-sizing: border-box;
-  padding-block: var(--atlas-inset-top, 32px) var(--atlas-inset-bottom, 24px);
+  padding-block: var(--atlas-inset-top, 32px) var(--atlas-inset-bottom, 32px);
   margin-inline: var(--atlas-gutter);
   max-width: calc(100% - 2 * var(--atlas-gutter));
 }
@@ -144,7 +144,7 @@
   z-index: 30;
   position: absolute;
   inset: auto 0 0;
-  height: var(--atlas-inset-bottom, 24px);
+  height: var(--atlas-inset-bottom, 32px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -219,3 +219,50 @@
   border-color: var(--ring, currentColor);
   color: var(--foreground, CanvasText);
 }
+
+@font-face {
+  font-family: "Atlas Caveat";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("./assets/Caveat.woff2") format("woff2-variations");
+}
+[data-atlas-overview-brand] {
+  position: absolute;
+  inset-inline: 0;
+  z-index: 30;
+  transform: translateY(-50%);
+  pointer-events: none;
+  user-select: none;
+  text-align: center;
+  white-space: nowrap;
+  font-family: "Atlas Caveat", cursive;
+  font-size: 48px;
+  line-height: 1;
+  color: var(--foreground, currentColor);
+}
+[data-atlas-overview-brand] > span { color: var(--alwith-violet, #7c3aed); }
+[data-atlas-overview-social] {
+  position: absolute;
+  inset-inline: 0;
+  z-index: 30;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  pointer-events: none;
+}
+[data-atlas-overview-social] > a {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  color: var(--muted-foreground, #737373);
+  text-decoration: none;
+  pointer-events: auto;
+}
+[data-atlas-overview-social] svg { width: 16px; height: 16px; fill: currentColor; }
+[data-atlas-overview-social] > a:hover { color: var(--atlas-social-brand); }
+.dark [data-atlas-overview-social] > a:hover { color: var(--atlas-social-brand-dark); }
+[data-atlas-overview-social] > a:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
