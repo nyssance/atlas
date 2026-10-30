@@ -1,7 +1,7 @@
-import"./chunk-8mrnnw0c.js";
+import"./chunk-g7em09bs.js";
 import {
   createAtlas2
-} from "./chunk-0mm8893a.js";
+} from "./chunk-av7s8s0b.js";
 import"./chunk-rpz9r67m.js";
 
 // src/react.tsx
@@ -63,9 +63,16 @@ function Atlas({
 }
 function AtlasRegion({
   id,
+  regionRole = "content",
+  pagination,
   ...props
 }) {
-  return createElement("section", { ...props, "data-atlas-region": id });
+  return createElement("section", {
+    ...props,
+    "data-atlas-region": id,
+    ...regionRole === "leading" ? { "data-atlas-leading": true } : regionRole === "trailing" ? { "data-atlas-trailing": true } : {},
+    "data-atlas-pagination": pagination
+  });
 }
 function AtlasNavigation(props) {
   return createElement("nav", { ...props, "data-atlas-navigation": "" }, createElement("div", { "data-atlas-navigation-surface": "" }, props.children));

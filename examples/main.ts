@@ -32,17 +32,23 @@ function ready(value: AtlasController) {
   document.documentElement.dataset.ready = mode;
 }
 if (mode === "react") {
-  const { createElement, useEffect, StrictMode } = await import("react");
+  const { createElement, useEffect, useState, StrictMode } =
+    await import("react");
   const { createRoot } = await import("react-dom/client");
   const { useAtlas } = await import("../dist/react");
   function Demo() {
-    const { ref, atlas } = useAtlas(options);
+    const [overview, setOverview] = useState<unknown>(null);
+    const { ref, atlas } = useAtlas({
+      ...options,
+      overview: { onChange: setOverview },
+    });
     useEffect(() => {
       if (atlas) ready(atlas);
     }, [atlas]);
     return createElement("div", {
       ...props,
       tabIndex: 0,
+      "data-overview-open": overview !== null,
       ref,
       dangerouslySetInnerHTML: { __html: content },
     });

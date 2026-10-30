@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
   type HTMLAttributes,
+  type ReactElement,
 } from "react";
 import { createAtlas, type AtlasController, type AtlasOptions } from "./dom";
 import type { AtlasState } from "./core";
@@ -67,9 +68,24 @@ export function Atlas({
 }
 export function AtlasRegion({
   id,
+  regionRole = "content",
+  pagination,
   ...props
-}: HTMLAttributes<HTMLElement> & { id: string }) {
-  return createElement("section", { ...props, "data-atlas-region": id });
+}: HTMLAttributes<HTMLElement> & {
+  id: string;
+  regionRole?: "content" | "leading" | "trailing";
+  pagination?: boolean;
+}): ReactElement {
+  return createElement("section", {
+    ...props,
+    "data-atlas-region": id,
+    ...(regionRole === "leading"
+      ? { "data-atlas-leading": true }
+      : regionRole === "trailing"
+        ? { "data-atlas-trailing": true }
+        : {}),
+    "data-atlas-pagination": pagination,
+  });
 }
 export function AtlasNavigation(props: HTMLAttributes<HTMLElement>) {
   return createElement(

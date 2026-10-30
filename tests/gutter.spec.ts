@@ -70,7 +70,7 @@ for (const direction of ["ltr", "rtl"] as const) {
       }
       expect(geometry.startEdge).toBeCloseTo(2 * gutter, 1);
       expect(geometry.endEdge).toBeCloseTo(2 * gutter, 1);
-      expect(geometry.bottom).toBeCloseTo(2 * gutter, 1);
+      expect(geometry.bottom).toBeCloseTo(24, 1);
       expect(geometry.contentPadding).toBe("17px");
       expect(geometry.active).toBe("workspace");
       await page.evaluate(() =>
@@ -105,11 +105,13 @@ for (const direction of ["ltr", "rtl"] as const) {
     await page.evaluate(() =>
       window.atlas.update({ insetBottom: undefined, gutter: 6 }),
     );
-    expect(await bottomSpacing()).toBe(12);
+    expect(await bottomSpacing()).toBe(24);
   });
 }
 
-test("surface radius is configurable without consuming region gutters", async ({ page }) => {
+test("surface radius is configurable without consuming region gutters", async ({
+  page,
+}) => {
   await page.goto("/");
   await page.waitForFunction(() => window.atlas);
   await page.evaluate(() => {
@@ -120,15 +122,22 @@ test("surface radius is configurable without consuming region gutters", async ({
     region.append(surface);
   });
   for (const radius of [14, 0, 22]) {
-    if (radius !== 14) await page.evaluate(radius => window.atlas.update({ surfaceRadius: radius }), radius);
+    if (radius !== 14)
+      await page.evaluate(
+        (radius) => window.atlas.update({ surfaceRadius: radius }),
+        radius,
+      );
     const geometry = await page.evaluate(() => {
       const region = document.querySelector('[data-atlas-region="workspace"]')!;
-      const surface = region.querySelector('[data-atlas-surface]')!;
+      const surface = region.querySelector("[data-atlas-surface]")!;
       return {
         radius: getComputedStyle(surface).borderRadius,
         overflow: getComputedStyle(surface).overflow,
-        gap: surface.getBoundingClientRect().left - region.getBoundingClientRect().left,
-        top: getComputedStyle(document.querySelector('[data-atlas]')!).paddingTop,
+        gap:
+          surface.getBoundingClientRect().left -
+          region.getBoundingClientRect().left,
+        top: getComputedStyle(document.querySelector("[data-atlas]")!)
+          .paddingTop,
       };
     });
     expect(geometry.radius).toBe(`${radius}px`);

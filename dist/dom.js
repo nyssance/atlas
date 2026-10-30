@@ -3,9 +3,9 @@ import {
   createAtlas2,
   observeTrackpad2,
   connectTrackpad2
-} from "./chunk-0mm8893a.js";
+} from "./chunk-av7s8s0b.js";
 import"./chunk-rpz9r67m.js";
-import"./chunk-8mrnnw0c.js";
+import"./chunk-g7em09bs.js";
 export {
   connectTrackpad2 as connectTrackpad,
   createAtlas2 as createAtlas,

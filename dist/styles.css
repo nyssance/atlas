@@ -34,8 +34,7 @@
 [data-atlas] {
   position: relative;
   box-sizing: border-box;
-  padding-block: var(--atlas-inset-top, 32px)
-    var(--atlas-inset-bottom, calc(2 * var(--atlas-gutter)));
+  padding-block: var(--atlas-inset-top, 32px) var(--atlas-inset-bottom, 24px);
   margin-inline: var(--atlas-gutter);
   max-width: calc(100% - 2 * var(--atlas-gutter));
 }
@@ -138,4 +137,97 @@
   min-height: 0;
   overflow: clip;
   border-radius: var(--atlas-surface-radius, 14px);
+}
+
+/* U page indicator: 16px target, 6px white dot, 40% inactive opacity. */
+[data-atlas-footer-navigation] {
+  z-index: 30;
+  position: absolute;
+  inset: auto 0 0;
+  height: var(--atlas-inset-bottom, 24px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+[data-atlas-footer-navigation][hidden] {
+  display: none;
+}
+[data-atlas-footer-navigation] button {
+  pointer-events: auto;
+}
+[data-atlas-page-dots] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+[data-atlas-page-dots][hidden] {
+  display: none;
+}
+[data-atlas-page-dots] > button {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+[data-atlas-page-dots] > button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 1px;
+}
+[data-atlas-page-dots] > button > span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(
+    --atlas-page-indicator,
+    var(--canvas-page-indicator, #fafafa)
+  );
+  opacity: 0.4;
+  transition: opacity 200ms;
+}
+[data-atlas-page-dots] > button[aria-current="page"] > span {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-atlas-page-dots] > button > span {
+    transition: none;
+  }
+}
+
+[data-atlas-overview-toggle] {
+  display: grid;
+  place-items: center;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--foreground, currentColor);
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  cursor: pointer;
+}
+[data-atlas-overview-overlay] {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+}
+[data-atlas-overview-overlay] > button {
+  position: absolute;
+  box-sizing: border-box;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--atlas-surface-radius, 14px);
+  color: transparent;
+  cursor: pointer;
+}
+[data-atlas-overview-overlay] > button:hover,
+[data-atlas-overview-overlay] > button:focus-visible {
+  border-color: var(--ring, currentColor);
+  color: var(--foreground, CanvasText);
 }

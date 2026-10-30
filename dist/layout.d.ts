@@ -1,8 +1,7 @@
-/** Desktop-derived defaults. Bottom spacing follows twice the gutter unless
- * explicitly overridden; status bars remain the host's responsibility. */
+/** Desktop-derived defaults. Bottom spacing reserves a stable footer for page navigation. */
 export declare const desktopDefaults: Readonly<{
     insetTop: 32;
-    insetBottom: 8;
+    insetBottom: 24;
     navigationWidth: 248;
     gutter: 4;
     surfaceRadius: 14;
@@ -15,7 +14,7 @@ export declare const desktopDefaults: Readonly<{
 }>;
 export interface AtlasLayoutOptions {
     insetTop?: number;
-    /** Defaults to gutter * 2; zero explicitly removes bottom spacing. */
+    /** Defaults to 24px; zero explicitly removes bottom spacing. */
     insetBottom?: number;
     navigationWidth?: number;
     /** Fixed viewport margin and each region’s half-gap, in CSS pixels. */

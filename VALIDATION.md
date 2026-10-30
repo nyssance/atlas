@@ -116,3 +116,18 @@ dry-run package verification. An additional regression ensures an idle focus
 change does not discard the next gesture. Physical trackpad and CEF native
 limitations above remain unchanged. Frontend and native bridge versions are
 0.1.1, distributed through the existing GitHub and crates.io channels.
+
+
+## Shared navigation and overview — 2026-10-30
+
+Atlas 0.1.5 adds the standard 24px footer, content-only pagination, external
+footer mounting and live thumbnail overview. Desktop retains its custom segment
+renderer and decorations; U, WorkBonny and GitCub consume the defaults.
+
+Type checking, build, Bun Canary lint and TS7 lint passed, along with 19 unit tests
+and 29 browser tests. Browser cases cover custom footer mounting, complete removal
+of disabled default navigation, auxiliary-region exclusion, RTL, keyboard/focus
+restoration, React overview state updates, and controller disposal.
+Isolated U and Desktop layout suites and all four frontend production builds were
+also checked. Native installed applications and physical trackpads are not covered
+by those frontend checks. No native bridge code changed in this release.

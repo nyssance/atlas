@@ -1,3 +1,9 @@
+import { createOverview, type AtlasOverviewOptions } from "./overview";
+import {
+  attachPagination,
+  paginationPages,
+  type AtlasPaginationOptions,
+} from "./pagination";
 import { applyLayout, type AtlasLayoutOptions } from "./layout";
 import { attachHoverNavigation } from "./hover";
 import EmblaCarousel from "embla-carousel";
@@ -6,6 +12,9 @@ import { attachInput } from "./input";
 
 export interface AtlasOptions extends AtlasLayoutOptions {
   initialRegion?: string;
+  overview?: boolean | AtlasOverviewOptions;
+  /** Default page dots; false allows a host-rendered replacement. */
+  pagination?: boolean | AtlasPaginationOptions;
   /** Transient overlay state; does not change the pinned preference. */
   onNavigationChange?: (peeking: boolean) => void;
   /** Optional snap markers for hosts with independently positioned regions. */
@@ -37,9 +46,11 @@ export interface AtlasGeometry {
   progress: number;
 }
 export interface AtlasController {
+  readonly overview: ReturnType<typeof createOverview>;
   readonly root: HTMLElement;
   readonly track: HTMLElement;
   getGeometry(): AtlasGeometry;
+  getPagination(): ReturnType<typeof paginationPages>;
   goToSnap(index: number, options?: { instant?: boolean }): void;
   on(event: AtlasEvent, listener: () => void): AtlasController;
   off(event: AtlasEvent, listener: () => void): AtlasController;
@@ -289,6 +300,12 @@ export function createAtlas(
   if (options.initialRegion) goTo(options.initialRegion, { instant: true });
   else publish();
   const controller: AtlasController = {
+    get overview() {
+      return overview;
+    },
+    getPagination() {
+      return paginationPages(controller.getGeometry());
+    },
     root,
     track,
     getGeometry() {
@@ -311,7 +328,8 @@ export function createAtlas(
       const ids = idsAt(index);
       const region = requested && ids.includes(requested) ? requested : ids[0];
       if (!region) throw new Error(`Unknown Atlas snap: ${index}`);
-      goTo(region, settings);
+      if (overview.getState()) overview.exit(region);
+      else goTo(region, settings);
     },
     on(event, listener) {
       api.on(event, listener);
@@ -346,7 +364,10 @@ export function createAtlas(
         listeners.delete(listener);
       };
     },
-    goTo,
+    goTo(region, settings) {
+      if (overview.getState()) overview.exit(region);
+      else goTo(region, settings);
+    },
     update(next) {
       if (disposed) return;
       const old = options;
@@ -361,6 +382,13 @@ export function createAtlas(
         JSON.stringify(layout) !== JSON.stringify(nextLayout);
       layout = nextLayout;
       hover.update();
+      pagination?.render();
+      if (
+        old.direction !== options.direction ||
+        layoutChanged ||
+        options.overview === false
+      )
+        overview.update();
       if (
         (old.trackpadEnabled && !options.trackpadEnabled) ||
         (old.trackpadAvailable && !options.trackpadAvailable)
@@ -401,6 +429,8 @@ export function createAtlas(
     },
     destroy() {
       if (disposed) return;
+      overview.dispose();
+      pagination?.dispose();
       disposed = true;
       observer.disconnect();
       hover.dispose();
@@ -427,6 +457,8 @@ export function createAtlas(
       }
     },
   };
+  const overview = createOverview(controller, () => options.overview ?? true);
+  const pagination = attachPagination(controller, () => options.pagination ?? true);
   return controller;
 }
 
@@ -507,3 +539,6 @@ export function connectTrackpad(
     controller.update({ trackpadAvailable: false });
   };
 }
+
+export type { AtlasOverviewOptions, AtlasOverviewState } from "./overview";
+export type { AtlasPaginationOptions } from "./pagination";

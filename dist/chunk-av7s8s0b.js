@@ -1,9 +1,274 @@
 import {
   applyLayout2
-} from "./chunk-8mrnnw0c.js";
+} from "./chunk-g7em09bs.js";
 import {
   resolveReleaseSnap2
 } from "./chunk-rpz9r67m.js";
+
+// src/overview.ts
+function createOverview(controller, options) {
+  const { root, track } = controller;
+  let state = null;
+  let overlay = null;
+  let observer = null;
+  let mutation = null;
+  let frame = 0;
+  let focus = null;
+  let inert = false;
+  let transition = "";
+  let origin = "";
+  const listeners = new Set;
+  const notify = () => {
+    const config = options();
+    if (typeof config === "object")
+      config.onChange?.(state);
+    listeners.forEach((listener) => listener(state));
+  };
+  const elements = () => {
+    const config = options();
+    const nodes = typeof config === "object" && config.regions ? track.querySelectorAll(config.regions) : track.children;
+    return [...nodes].filter((node) => node instanceof HTMLElement && node.offsetWidth > 0);
+  };
+  const idOf = (node) => node.dataset.atlasRegion ?? node.dataset.atlasOverviewRegion ?? (node.hasAttribute("data-atlas-navigation") ? "navigation" : "");
+  const measure = () => {
+    if (!state)
+      return;
+    const config = options();
+    const width = track.scrollWidth;
+    const viewport = root.clientWidth;
+    const scale = state.scale > 0 && state.padding + width * state.scale <= viewport - 16 ? state.scale : Math.min(Math.max(0, viewport - 32) / Math.max(1, width), 1);
+    const padding = state.scale === scale ? state.padding : Math.max((viewport - width * scale) / 2, 16);
+    track.style.transformOrigin = `${root.dir === "rtl" ? "right" : "left"} center`;
+    track.style.transform = `translate3d(${root.dir === "rtl" ? -padding : padding}px, 0, 0) scale(${scale})`;
+    const nodes = elements();
+    state = {
+      scale,
+      padding,
+      contentHeight: track.clientHeight * scale,
+      regions: nodes.map((node) => {
+        const id = idOf(node);
+        return {
+          id,
+          width: node.offsetWidth * scale,
+          label: typeof config === "object" ? config.regionLabel?.(id) ?? node.getAttribute("aria-label") ?? id : node.getAttribute("aria-label") ?? id
+        };
+      })
+    };
+    if (overlay) {
+      const bounds = root.getBoundingClientRect();
+      const focused = overlay.contains(document.activeElement) ? document.activeElement?.getAttribute("data-atlas-overview-target") : null;
+      overlay.replaceChildren(...nodes.map((node, index) => {
+        const box = node.getBoundingClientRect();
+        const button = document.createElement("button");
+        button.type = "button";
+        button.dataset.atlasOverviewTarget = idOf(node);
+        button.setAttribute("aria-label", state.regions[index].label);
+        button.style.cssText = `left:${box.left - bounds.left}px;top:${box.top - bounds.top}px;width:${box.width}px;height:${box.height}px`;
+        button.textContent = state.regions[index].label;
+        button.onclick = () => exit(idOf(node));
+        return button;
+      }));
+      if (focused)
+        [...overlay.querySelectorAll("button")].find((button) => button.dataset.atlasOverviewTarget === focused)?.focus({ preventScroll: true });
+    }
+    notify();
+  };
+  const schedule = () => {
+    cancelAnimationFrame(frame);
+    frame = requestAnimationFrame(measure);
+  };
+  const keydown = (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      exit();
+    }
+  };
+  const enter = () => {
+    if (state || options() === false)
+      return;
+    controller.suspend();
+    focus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    inert = track.inert;
+    track.inert = true;
+    transition = track.style.transition;
+    origin = track.style.transformOrigin;
+    track.style.transition = "none";
+    track.style.transformOrigin = `${root.dir === "rtl" ? "right" : "left"} center`;
+    state = { scale: 0, padding: 16, contentHeight: 0, regions: [] };
+    root.dataset.atlasOverview = "";
+    const config = options();
+    if (typeof config !== "object" || config.renderOverlay !== false) {
+      overlay = document.createElement("div");
+      overlay.dataset.atlasOverviewOverlay = "";
+      overlay.setAttribute("role", "group");
+      overlay.setAttribute("aria-label", typeof config === "object" ? config.label ?? "Overview" : "Overview");
+      root.append(overlay);
+    }
+    measure();
+    observer = new ResizeObserver(schedule);
+    observer.observe(root);
+    elements().forEach((node) => observer.observe(node));
+    mutation = new MutationObserver(() => {
+      elements().forEach((node) => observer?.observe(node));
+      schedule();
+    });
+    mutation.observe(track, { childList: true });
+    root.ownerDocument.addEventListener("keydown", keydown, true);
+    overlay?.querySelector("button")?.focus({ preventScroll: true });
+  };
+  const exit = (id) => {
+    if (!state)
+      return;
+    const geometry = controller.getGeometry();
+    const index = id ? geometry.regions.findIndex((node) => node.dataset.atlasRegion === id) : -1;
+    const snap = index < 0 ? geometry.selected : geometry.groups.findIndex((group) => group.includes(index));
+    cancelAnimationFrame(frame);
+    observer?.disconnect();
+    mutation?.disconnect();
+    root.ownerDocument.removeEventListener("keydown", keydown, true);
+    overlay?.remove();
+    overlay = null;
+    delete root.dataset.atlasOverview;
+    track.inert = inert;
+    track.style.transition = transition;
+    track.style.transformOrigin = origin;
+    state = null;
+    controller.resume(snap < 0 ? geometry.selected : snap);
+    if (id && controller.getGeometry().regions.some((node) => node.dataset.atlasRegion === id))
+      controller.goTo(id, { instant: true });
+    notify();
+    if (focus?.isConnected && !focus.closest("[inert]"))
+      focus.focus({ preventScroll: true });
+  };
+  return {
+    enabled: () => options() !== false,
+    update() {
+      if (options() === false)
+        exit();
+      else if (state)
+        measure();
+    },
+    enter,
+    exit,
+    toggle() {
+      state ? exit() : enter();
+    },
+    getState: () => state,
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+    dispose() {
+      exit();
+      listeners.clear();
+    }
+  };
+}
+
+// src/pagination.ts
+function paginationPages(geometry) {
+  return geometry.groups.flatMap((group, snap) => {
+    const regions = group.map((index) => geometry.regions[index]).filter((node) => {
+      if (!node.hasAttribute("data-atlas-region") || node.hasAttribute("data-atlas-navigation"))
+        return false;
+      const explicit = node.getAttribute("data-atlas-pagination");
+      return explicit === "true" || explicit !== "false" && !node.hasAttribute("data-atlas-leading") && !node.hasAttribute("data-atlas-trailing");
+    });
+    return regions.length ? [{ snap, regions: regions.map((node) => node.dataset.atlasRegion) }] : [];
+  });
+}
+function attachPagination(controller, options) {
+  const nav = document.createElement("nav");
+  nav.dataset.atlasPageDots = "";
+  const wrapper = document.createElement("div");
+  wrapper.dataset.atlasFooterNavigation = "";
+  const overview = document.createElement("button");
+  overview.type = "button";
+  overview.dataset.atlasOverviewToggle = "";
+  overview.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="5" width="7" height="14" rx="1.5"/><rect x="14" y="5" width="7" height="14" rx="1.5"/></svg>';
+  overview.onclick = () => controller.overview.toggle();
+  wrapper.append(nav, overview);
+  controller.root.append(wrapper);
+  let signature = "";
+  const render = () => {
+    const config = options();
+    if (config === false) {
+      wrapper.remove();
+      return;
+    }
+    const target = typeof config === "object" ? config.container : undefined;
+    const container = (typeof target === "function" ? target() : target) ?? controller.root;
+    if (wrapper.parentElement !== container)
+      container.append(wrapper);
+    overview.hidden = !controller.overview.enabled();
+    overview.setAttribute("aria-label", typeof config === "object" ? config.overviewLabel ?? "Overview" : "Overview");
+    overview.setAttribute("aria-pressed", String(controller.overview.getState() !== null));
+    const pages = paginationPages(controller.getGeometry());
+    const active = controller.getState().activeRegion;
+    nav.hidden = pages.length <= 1;
+    nav.setAttribute("aria-label", typeof config === "object" ? config.label ?? "Pages" : "Pages");
+    const labels = pages.map((_, index) => typeof config === "object" ? config.pageLabel?.(index) ?? `Page ${index + 1}` : `Page ${index + 1}`);
+    const next = JSON.stringify([pages, labels]);
+    if (next !== signature) {
+      signature = next;
+      nav.replaceChildren(...pages.map((page, index) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.setAttribute("aria-label", labels[index]);
+        button.append(document.createElement("span"));
+        button.firstElementChild.setAttribute("aria-hidden", "true");
+        button.onclick = () => controller.goToSnap(page.snap);
+        button.onkeydown = (event) => {
+          const rtl = controller.root.dir === "rtl";
+          const target = event.key === "Home" ? 0 : event.key === "End" ? pages.length - 1 : event.key === (rtl ? "ArrowLeft" : "ArrowRight") ? Math.min(pages.length - 1, index + 1) : event.key === (rtl ? "ArrowRight" : "ArrowLeft") ? Math.max(0, index - 1) : null;
+          if (target === null)
+            return;
+          event.preventDefault();
+          event.stopPropagation();
+          controller.goToSnap(pages[target].snap);
+          nav.children[target].focus({
+            preventScroll: true
+          });
+        };
+        return button;
+      }));
+    }
+    pages.forEach((page, index) => {
+      const button = nav.children[index];
+      if (active && page.regions.includes(active))
+        button.setAttribute("aria-current", "page");
+      else
+        button.removeAttribute("aria-current");
+    });
+  };
+  const stop = controller.subscribe(render);
+  const stopOverview = controller.overview.subscribe(render);
+  controller.on("reInit", render);
+  const observer = new MutationObserver(render);
+  observer.observe(controller.track, {
+    subtree: true,
+    attributes: true,
+    attributeFilter: [
+      "data-atlas-pagination",
+      "data-atlas-leading",
+      "data-atlas-trailing"
+    ]
+  });
+  render();
+  return {
+    render,
+    dispose() {
+      stop();
+      stopOverview();
+      controller.off("reInit", render);
+      observer.disconnect();
+      wrapper.remove();
+    }
+  };
+}
 
 // src/hover.ts
 import { animate } from "motion";
@@ -619,6 +884,12 @@ function createAtlas2(root, initial = {}) {
   else
     publish();
   const controller = {
+    get overview() {
+      return overview;
+    },
+    getPagination() {
+      return paginationPages(controller.getGeometry());
+    },
     root,
     track,
     getGeometry() {
@@ -639,7 +910,10 @@ function createAtlas2(root, initial = {}) {
       const region = requested && ids.includes(requested) ? requested : ids[0];
       if (!region)
         throw new Error(`Unknown Atlas snap: ${index}`);
-      goTo(region, settings);
+      if (overview.getState())
+        overview.exit(region);
+      else
+        goTo(region, settings);
     },
     on(event, listener) {
       api.on(event, listener);
@@ -677,7 +951,12 @@ function createAtlas2(root, initial = {}) {
         listeners.delete(listener);
       };
     },
-    goTo,
+    goTo(region, settings) {
+      if (overview.getState())
+        overview.exit(region);
+      else
+        goTo(region, settings);
+    },
     update(next) {
       if (disposed)
         return;
@@ -692,6 +971,9 @@ function createAtlas2(root, initial = {}) {
       const layoutChanged = JSON.stringify(layout) !== JSON.stringify(nextLayout);
       layout = nextLayout;
       hover.update();
+      pagination?.render();
+      if (old.direction !== options.direction || layoutChanged || options.overview === false)
+        overview.update();
       if (old.trackpadEnabled && !options.trackpadEnabled || old.trackpadAvailable && !options.trackpadAvailable)
         input.cancel();
       if (old.flickMinIndex !== options.flickMinIndex || old.panButton !== options.panButton) {
@@ -720,6 +1002,8 @@ function createAtlas2(root, initial = {}) {
     destroy() {
       if (disposed)
         return;
+      overview.dispose();
+      pagination?.dispose();
       disposed = true;
       observer.disconnect();
       hover.dispose();
@@ -754,6 +1038,8 @@ function createAtlas2(root, initial = {}) {
       }
     }
   };
+  const overview = createOverview(controller, () => options.overview ?? true);
+  const pagination = attachPagination(controller, () => options.pagination ?? true);
   return controller;
 }
 function observeTrackpad2(source, onAvailability, onError, intervalMs = 5000) {

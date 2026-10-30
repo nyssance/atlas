@@ -1,7 +1,12 @@
+import { createOverview, type AtlasOverviewOptions } from "./overview";
+import { paginationPages, type AtlasPaginationOptions } from "./pagination";
 import { type AtlasLayoutOptions } from "./layout";
 import type { AtlasState, TrackpadGesture } from "./core";
 export interface AtlasOptions extends AtlasLayoutOptions {
     initialRegion?: string;
+    overview?: boolean | AtlasOverviewOptions;
+    /** Default page dots; false allows a host-rendered replacement. */
+    pagination?: boolean | AtlasPaginationOptions;
     /** Transient overlay state; does not change the pinned preference. */
     onNavigationChange?: (peeking: boolean) => void;
     /** Optional snap markers for hosts with independently positioned regions. */
@@ -31,9 +36,11 @@ export interface AtlasGeometry {
     progress: number;
 }
 export interface AtlasController {
+    readonly overview: ReturnType<typeof createOverview>;
     readonly root: HTMLElement;
     readonly track: HTMLElement;
     getGeometry(): AtlasGeometry;
+    getPagination(): ReturnType<typeof paginationPages>;
     goToSnap(index: number, options?: {
         instant?: boolean;
     }): void;
@@ -62,3 +69,5 @@ export declare function createAtlas(root: HTMLElement, initial?: AtlasOptions): 
 /** Shared device lifecycle for desktop hosts. Missing hardware never enables input. */
 export declare function observeTrackpad(source: import("./core").TrackpadSource, onAvailability: (available: boolean) => void, onError: (error: unknown) => void, intervalMs?: number): () => void;
 export declare function connectTrackpad(controller: AtlasController, source: import("./core").TrackpadSource, onError: (error: unknown) => void, onAvailability?: (available: boolean) => void): () => void;
+export type { AtlasOverviewOptions, AtlasOverviewState } from "./overview";
+export type { AtlasPaginationOptions } from "./pagination";
