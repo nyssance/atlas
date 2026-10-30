@@ -1,58 +1,113 @@
 //! 触控板存在性检测(开机「关闭触控板滑动」询问的门槛)。
 //!
-//! macOS:IOHIDManager 枚举全部 HID 设备,按 usage 对(Digitizer 0x0D / TouchPad 0x05)
-//! 判定——内置触控板、Magic Trackpad(蓝牙/USB)、第三方精确触控板统一命中,不依赖
-//! Apple 私有 IOKit 类名(AppleMultitouchTrackpad 等随代际漂移)。只读设备元数据、
-//! 不 Open manager,不触发「输入监控」TCC 授权。
+//! macOS:只读 IORegistry 的 HID usage 元数据(Digitizer 0x0D / TouchPad 0x05)。
+//! 不创建 IOHIDManager、不打开输入设备、不请求输入监控权限。
 //! Windows:`GetPointerDevices` 枚举 `POINTER_DEVICE_TYPE_TOUCH_PAD`(精确触控板,
 //! Win8.1+ 正规 API)。老式非精确触控板对 OS 就是鼠标,查不出来——检测不到不弹询问,
 //! 设置页开关仍可手动调。Linux:桌面环境各异无统一查询,恒 false,同上兜底路径。
 
 #[cfg(target_os = "macos")]
 mod macos {
-    use std::ffi::c_void;
-
-    const K_HID_PAGE_DIGITIZER: u32 = 0x0D;
-    const K_HID_USAGE_DIG_TOUCH_PAD: u32 = 0x05;
+    use std::ffi::{c_char, c_void};
 
     #[link(name = "IOKit", kind = "framework")]
     unsafe extern "C" {
-        fn IOHIDManagerCreate(allocator: *const c_void, options: u32) -> *mut c_void;
-        fn IOHIDManagerSetDeviceMatching(manager: *mut c_void, matching: *const c_void);
-        fn IOHIDManagerCopyDevices(manager: *mut c_void) -> *const c_void;
-        fn IOHIDDeviceConformsTo(device: *const c_void, usage_page: u32, usage: u32) -> u8;
+        fn IOServiceMatching(name: *const c_char) -> *const c_void;
+        fn IOServiceGetMatchingServices(port: u32, matching: *const c_void, iterator: *mut u32) -> i32;
+        fn IOIteratorNext(iterator: u32) -> u32;
+        fn IOObjectRelease(object: u32) -> i32;
+        fn IORegistryEntryCreateCFProperty(
+            entry: u32, key: *const c_void, allocator: *const c_void, options: u32,
+        ) -> *const c_void;
     }
 
     #[link(name = "CoreFoundation", kind = "framework")]
     unsafe extern "C" {
-        fn CFSetGetCount(set: *const c_void) -> isize;
-        fn CFSetGetValues(set: *const c_void, values: *mut *const c_void);
-        fn CFRelease(cf: *const c_void);
+        fn CFStringCreateWithCString(allocator: *const c_void, value: *const c_char, encoding: u32) -> *const c_void;
+        fn CFGetTypeID(value: *const c_void) -> usize;
+        fn CFArrayGetTypeID() -> usize;
+        fn CFArrayGetCount(array: *const c_void) -> isize;
+        fn CFArrayGetValueAtIndex(array: *const c_void, index: isize) -> *const c_void;
+        fn CFDictionaryGetTypeID() -> usize;
+        fn CFDictionaryGetValue(dict: *const c_void, key: *const c_void) -> *const c_void;
+        fn CFNumberGetTypeID() -> usize;
+        fn CFNumberGetValue(number: *const c_void, kind: isize, value: *mut i64) -> u8;
+        fn CFRelease(value: *const c_void);
+    }
+
+    struct Object(u32);
+    impl Drop for Object {
+        fn drop(&mut self) {
+            unsafe {
+                IOObjectRelease(self.0);
+            }
+        }
+    }
+    struct OwnedCf(*const c_void);
+    impl Drop for OwnedCf {
+        fn drop(&mut self) {
+            if !self.0.is_null() {
+                unsafe {
+                    CFRelease(self.0);
+                }
+            }
+        }
+    }
+    fn key(value: &std::ffi::CStr) -> OwnedCf {
+        OwnedCf(unsafe { CFStringCreateWithCString(std::ptr::null(), value.as_ptr(), 0x08000100) })
+    }
+    unsafe fn number(value: *const c_void) -> Option<i64> {
+        unsafe {
+            if value.is_null() || CFGetTypeID(value) != CFNumberGetTypeID() {
+                return None;
+            }
+            let mut result = 0;
+            (CFNumberGetValue(value, 4, &mut result) != 0).then_some(result)
+        }
     }
 
     pub fn has_touchpad() -> bool {
+        // Read registry metadata only. Never instantiate/open HID devices or a HID manager:
+        // those APIs may load user clients and trigger Input Monitoring during startup.
         unsafe {
-            let manager = IOHIDManagerCreate(std::ptr::null(), 0);
-            if manager.is_null() {
+            let matching = IOServiceMatching(c"IOHIDDevice".as_ptr());
+            if matching.is_null() {
                 return false;
             }
-            // matching = NULL:匹配所有 HID 设备,再按 usage 过滤
-            IOHIDManagerSetDeviceMatching(manager, std::ptr::null());
-            let devices = IOHIDManagerCopyDevices(manager);
-            let found = if devices.is_null() {
-                false
-            } else {
-                let count = CFSetGetCount(devices).max(0) as usize;
-                let mut values = vec![std::ptr::null::<c_void>(); count];
-                CFSetGetValues(devices, values.as_mut_ptr());
-                let hit = values.iter().any(|d| {
-                    !d.is_null() && IOHIDDeviceConformsTo(*d, K_HID_PAGE_DIGITIZER, K_HID_USAGE_DIG_TOUCH_PAD) != 0
-                });
-                CFRelease(devices);
-                hit
-            };
-            CFRelease(manager as *const c_void);
-            found
+            let mut iterator = 0;
+            // This call consumes the matching dictionary, including on failure.
+            if IOServiceGetMatchingServices(0, matching, &mut iterator) != 0 {
+                return false;
+            }
+            let iterator = Object(iterator);
+            let pairs_key = key(c"DeviceUsagePairs");
+            let page_key = key(c"DeviceUsagePage");
+            let usage_key = key(c"DeviceUsage");
+            if pairs_key.0.is_null() || page_key.0.is_null() || usage_key.0.is_null() {
+                return false;
+            }
+            loop {
+                let service = IOIteratorNext(iterator.0);
+                if service == 0 {
+                    return false;
+                }
+                let service = Object(service);
+                let pairs = OwnedCf(IORegistryEntryCreateCFProperty(service.0, pairs_key.0, std::ptr::null(), 0));
+                if pairs.0.is_null() || CFGetTypeID(pairs.0) != CFArrayGetTypeID() {
+                    continue;
+                }
+                for index in 0..CFArrayGetCount(pairs.0) {
+                    let pair = CFArrayGetValueAtIndex(pairs.0, index);
+                    if pair.is_null() || CFGetTypeID(pair) != CFDictionaryGetTypeID() {
+                        continue;
+                    }
+                    if number(CFDictionaryGetValue(pair, page_key.0)) == Some(0x0D)
+                        && number(CFDictionaryGetValue(pair, usage_key.0)) == Some(0x05)
+                    {
+                        return true;
+                    }
+                }
+            }
         }
     }
 }
