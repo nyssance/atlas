@@ -13,33 +13,25 @@ export function tauriTrackpad(
   };
 }
 
-/** Opt-in native dragging for Atlas's top inset only. */
+/** Mark the top inset as a native Tauri drag region. No mouse handling. */
 export function attachWindowDrag(
   root: HTMLElement,
-  onError: (error: unknown) => void,
+  _onError: (error: unknown) => void,
 ) {
-  const onPointerDown = (event: MouseEvent) => {
-    if (event.button !== 0) return;
-    const target = event.target;
-    if (
-      !(target instanceof Element) ||
-      target.closest(
-        'button, a, input, textarea, select, [contenteditable], [role="button"], [data-atlas-no-drag]',
-      )
-    )
-      return;
-    const bounds = root.getBoundingClientRect();
-    const top = Number.parseFloat(getComputedStyle(root).paddingTop);
-    if (event.clientY < bounds.top || event.clientY >= bounds.top + top) return;
-    event.preventDefault();
-    void import("@tauri-apps/api/window")
-      .then(({ getCurrentWindow }) =>
-        event.detail === 2
-          ? getCurrentWindow().toggleMaximize()
-          : getCurrentWindow().startDragging(),
-      )
-      .catch(onError);
+  const existing = root.querySelector<HTMLElement>(
+    ":scope > [data-atlas-topbar]",
+  );
+  const topbar = existing ?? root.ownerDocument.createElement("div");
+  const previous = topbar.getAttribute("data-tauri-drag-region");
+  topbar.setAttribute("data-tauri-drag-region", "deep");
+  if (!existing) {
+    topbar.setAttribute("data-atlas-topbar", "");
+    root.append(topbar);
+  }
+  return () => {
+    if (!existing) topbar.remove();
+    else if (previous === null)
+      topbar.removeAttribute("data-tauri-drag-region");
+    else topbar.setAttribute("data-tauri-drag-region", previous);
   };
-  root.addEventListener("mousedown", onPointerDown);
-  return () => root.removeEventListener("mousedown", onPointerDown);
 }

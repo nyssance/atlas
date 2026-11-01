@@ -7,58 +7,77 @@ declare global {
   }
 }
 
-test("desktop top inset drags only empty space and disposes its listener", async ({
-  page,
-}) => {
-  await page.goto("/");
-  await expect(page.locator("html")).toHaveAttribute("data-ready", "dom");
-  const calls = await page.evaluate(async () => {
-    const calls: string[] = [];
-    Object.assign(window, {
-      __TAURI_INTERNALS__: {
-        metadata: {
-          currentWindow: { label: "main" },
-          currentWebview: { label: "main" },
-        },
-        invoke: async (command: string) => {
-          calls.push(command);
-        },
-      },
-    });
-    const { attachWindowDrag } = window;
-    const root = window.atlas.root;
-    const failures: unknown[] = [];
-    const stop = attachWindowDrag(root, (error: unknown) =>
-      failures.push(error),
-    );
-    const bounds = root.getBoundingClientRect();
-    const fire = (target: Element, y: number, detail = 1) =>
-      target.dispatchEvent(
-        new MouseEvent("mousedown", {
-          bubbles: true,
-          cancelable: true,
-          button: 0,
-          detail,
-          clientX: bounds.x + 20,
-          clientY: bounds.y + y,
-        }),
+for (const existing of [false, true]) {
+  test(`native topbar marking and cleanup (existing=${existing})`, async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await expect(page.locator("html")).toHaveAttribute("data-ready", "dom");
+    const result = await page.evaluate((existing) => {
+      const root = window.atlas.root;
+      if (existing) {
+        const header = document.createElement("div");
+        header.setAttribute("data-atlas-topbar", "");
+        header.setAttribute("data-tauri-drag-region", "true");
+        root.append(header);
+      }
+      const stop = window.attachWindowDrag(root, (error) => {
+        throw error;
+      });
+      const topbar = root.querySelector<HTMLElement>(
+        ":scope > [data-atlas-topbar]",
+      )!;
+      const bounds = topbar.getBoundingClientRect();
+      const rootBounds = root.getBoundingClientRect();
+      const marker = topbar.getAttribute("data-tauri-drag-region");
+      const events: string[] = [];
+      const receive = (event: Event) => {
+        events.push(event.type);
+      };
+      for (const type of ["mousedown", "mouseup", "dblclick"])
+        document.addEventListener(type, receive);
+      const uncanceled = ["mousedown", "mouseup", "dblclick"].map((type) =>
+        topbar.dispatchEvent(
+          new MouseEvent(type, {
+            bubbles: true,
+            cancelable: true,
+            detail: 2,
+            clientX: bounds.x + 10,
+            clientY: bounds.y + 10,
+          }),
+        ),
       );
-    fire(root, 10);
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    fire(root, 10, 2);
-    const button = document.createElement("button");
-    root.append(button);
-    fire(button, 10);
-    fire(root, 40);
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    stop();
-    fire(root, 10);
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    if (failures.length) throw failures[0];
-    return calls;
+      for (const type of ["mousedown", "mouseup", "dblclick"])
+        document.removeEventListener(type, receive);
+      const overview = window.atlas.overview.getState();
+      stop();
+      return {
+        marker,
+        events,
+        uncanceled,
+        overview,
+        height: bounds.height,
+        top: bounds.top - rootBounds.top,
+        rootMarked: root.hasAttribute("data-tauri-drag-region"),
+        footerMarked: !!root.querySelector(
+          "[data-atlas-footer][data-tauri-drag-region]",
+        ),
+        remaining:
+          root
+            .querySelector("[data-atlas-topbar]")
+            ?.getAttribute("data-tauri-drag-region") ?? null,
+      };
+    }, existing);
+    expect(result).toEqual({
+      marker: "deep",
+      events: ["mousedown", "mouseup", "dblclick"],
+      uncanceled: [true, true, true],
+      overview: null,
+      height: 32,
+      top: 0,
+      rootMarked: false,
+      footerMarked: false,
+      remaining: existing ? "true" : null,
+    });
   });
-  expect(calls).toEqual([
-    "plugin:window|start_dragging",
-    "plugin:window|toggle_maximize",
-  ]);
-});
+}

@@ -3,5 +3,5 @@ export declare function tauriTrackpad(options?: {
     command?: string;
     event?: string;
 }): TrackpadSource;
-/** Opt-in native dragging for Atlas's top inset only. */
-export declare function attachWindowDrag(root: HTMLElement, onError: (error: unknown) => void): () => void;
+/** Mark the top inset as a native Tauri drag region. No mouse handling. */
+export declare function attachWindowDrag(root: HTMLElement, _onError: (error: unknown) => void): () => void;
