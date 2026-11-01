@@ -1,4 +1,4 @@
-import { type HTMLAttributes, type ReactElement } from "react";
+import { type HTMLAttributes, type ReactElement, type ReactNode } from "react";
 import { type AtlasController, type AtlasOptions } from "./dom";
 import type { AtlasState } from "./core";
 export declare function useAtlas(options?: AtlasOptions): {
@@ -8,10 +8,11 @@ export declare function useAtlas(options?: AtlasOptions): {
 };
 export interface AtlasProps extends HTMLAttributes<HTMLDivElement> {
     options?: AtlasOptions;
+    footer?: ReactNode;
     onReady?: (atlas: AtlasController) => void;
     onStateChange?: (state: AtlasState) => void;
 }
-export declare function Atlas({ options, onReady, onStateChange, children, ...props }: AtlasProps): import("react").DetailedReactHTMLElement<{
+export declare function Atlas({ options, onReady, onStateChange, children, footer, ...props }: AtlasProps): import("react").DetailedReactHTMLElement<{
     dangerouslySetInnerHTML?: {
         __html: string | TrustedHTML;
     } | undefined;
@@ -291,7 +292,6 @@ export declare function Atlas({ options, onReady, onStateChange, children, ...pr
     exportparts?: string | undefined;
     part?: string | undefined;
     ref: (node: HTMLElement | null) => void;
-    "data-atlas": string;
     tabIndex: number;
 }, HTMLElement>;
 export declare function AtlasRegion({ id, regionRole, pagination, ...props }: HTMLAttributes<HTMLElement> & {
@@ -300,7 +300,7 @@ export declare function AtlasRegion({ id, regionRole, pagination, ...props }: HT
     pagination?: boolean;
 }): ReactElement;
 export declare function AtlasNavigation(props: HTMLAttributes<HTMLElement>): import("react").DetailedReactHTMLElement<{
-    children?: import("react").ReactNode | undefined;
+    children?: ReactNode | undefined;
     dangerouslySetInnerHTML?: {
         __html: string | TrustedHTML;
     } | undefined;
@@ -582,3 +582,5 @@ export declare function AtlasNavigation(props: HTMLAttributes<HTMLElement>): imp
     part?: string | undefined;
     "data-atlas-navigation": string;
 }, HTMLElement>;
+/** Fixed footer outside the moving track. Content and interactions belong to the host. */
+export declare function AtlasFooter(props: HTMLAttributes<HTMLDivElement>): ReactElement;

@@ -2,10 +2,12 @@ import {
   createElement,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type HTMLAttributes,
   type ReactElement,
+  type ReactNode,
 } from "react";
 import { createAtlas, type AtlasController, type AtlasOptions } from "./dom";
 import type { AtlasState } from "./core";
@@ -20,7 +22,7 @@ export function useAtlas(options: AtlasOptions = {}) {
   });
   const latest = useRef(options);
   latest.current = options;
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!root) return;
     const controller = createAtlas(root, latest.current);
     setAtlas(controller);
@@ -43,6 +45,7 @@ export function useAtlas(options: AtlasOptions = {}) {
 }
 export interface AtlasProps extends HTMLAttributes<HTMLDivElement> {
   options?: AtlasOptions;
+  footer?: ReactNode;
   onReady?: (atlas: AtlasController) => void;
   onStateChange?: (state: AtlasState) => void;
 }
@@ -51,6 +54,7 @@ export function Atlas({
   onReady,
   onStateChange,
   children,
+  footer,
   ...props
 }: AtlasProps) {
   const { ref, atlas, state } = useAtlas(options);
@@ -62,8 +66,9 @@ export function Atlas({
   }, [state, onStateChange]);
   return createElement(
     "div",
-    { ...props, ref, "data-atlas": "", tabIndex: props.tabIndex ?? 0 },
+    { ...props, ref, tabIndex: props.tabIndex ?? 0 },
     createElement("div", { "data-atlas-track": "" }, children),
+    footer != null && createElement(AtlasFooter, null, footer),
   );
 }
 export function AtlasRegion({
@@ -97,4 +102,11 @@ export function AtlasNavigation(props: HTMLAttributes<HTMLElement>) {
       props.children,
     ),
   );
+}
+
+/** Fixed footer outside the moving track. Content and interactions belong to the host. */
+export function AtlasFooter(
+  props: HTMLAttributes<HTMLDivElement>,
+): ReactElement {
+  return createElement("div", { ...props, "data-atlas-footer": "" });
 }

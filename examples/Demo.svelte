@@ -6,7 +6,6 @@
 
 <div
   use:atlas={{ initialRegion: "workspace", flickMinIndex: 1, onReady: ready }}
-  data-atlas
   data-atlas-layout="navigation"
   tabindex="0"
   role="group"

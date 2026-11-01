@@ -1,3 +1,4 @@
+import { untrack } from "svelte";
 import type { Action } from "svelte/action";
 import { createAtlas, type AtlasController, type AtlasOptions } from "./dom";
 import type { AtlasState } from "./core";
@@ -10,14 +11,14 @@ export const atlas: Action<HTMLElement, AtlasActionOptions | undefined> = (
   initial = {},
 ) => {
   let options = initial;
-  const controller = createAtlas(node, options);
+  const controller = untrack(() => createAtlas(node, options));
   options.onReady?.(controller);
   options.onStateChange?.(controller.getState());
   const stop = controller.subscribe((state) => options.onStateChange?.(state));
   return {
     update(next = {}) {
       options = next;
-      controller.update(next);
+      untrack(() => controller.update(next));
     },
     destroy() {
       stop();

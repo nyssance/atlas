@@ -185,6 +185,7 @@ for (const direction of ["ltr", "rtl"] as const) {
   test(`layout parameters and hover navigation ${direction}`, async ({
     page,
   }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/");
     await expect(page.locator("html")).toHaveAttribute("data-ready", "dom");
     await page.evaluate(

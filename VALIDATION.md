@@ -131,3 +131,11 @@ restoration, React overview state updates, and controller disposal.
 Isolated U and Desktop layout suites and all four frontend production builds were
 also checked. Native installed applications and physical trackpads are not covered
 by those frontend checks. No native bridge code changed in this release.
+
+## 0.1.9 layout standardization (2026-11-01)
+
+- The controller owns the root marker. Shared outer edges and pane gaps are 8px with the default gutter; the top is 32px. The bottom is 32px with pagination or business status content and 8px without it.
+- Verified dynamic footer insertion, removal and visibility, page-count changes, default/override/zero gutters, LTR/RTL, reserved leading rail spacing, and native top-inset drag exclusions and disposal.
+- Desktop and WorkBonny actual React shells measure 8px outer edges/gaps and a 32px shared footer. GitCub measures 8px outer edges/gaps/bottom without a footer. Yijoy's production Svelte shell and interactive integration route pass.
+- U navigation motion preserves pane widths; manual splitting supersedes a previous preview selection. Its relevant layout stories and 28 unit tests pass. Desktop main-window/open-file stories pass accessibility checks; session-popover unit tests pass (27).
+- Vue and Angular adapters remain available. Routine release browser checks select the current DOM/React/Svelte consumers; other framework cases remain selectable when those adapters change.

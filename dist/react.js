@@ -1,7 +1,7 @@
-import"./chunk-jyva3dz0.js";
+import"./chunk-jw8ne0nx.js";
 import {
   createAtlas2
-} from "./chunk-4335tnee.js";
+} from "./chunk-4kxdk2qd.js";
 import"./chunk-rpz9r67m.js";
 
 // src/react.tsx
@@ -9,6 +9,7 @@ import {
   createElement,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState
 } from "react";
@@ -22,7 +23,7 @@ function useAtlas(options = {}) {
   });
   const latest = useRef(options);
   latest.current = options;
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!root)
       return;
     const controller = createAtlas2(root, latest.current);
@@ -49,6 +50,7 @@ function Atlas({
   onReady,
   onStateChange,
   children,
+  footer,
   ...props
 }) {
   const { ref, atlas, state } = useAtlas(options);
@@ -59,7 +61,7 @@ function Atlas({
   useEffect(() => {
     onStateChange?.(state);
   }, [state, onStateChange]);
-  return createElement("div", { ...props, ref, "data-atlas": "", tabIndex: props.tabIndex ?? 0 }, createElement("div", { "data-atlas-track": "" }, children));
+  return createElement("div", { ...props, ref, tabIndex: props.tabIndex ?? 0 }, createElement("div", { "data-atlas-track": "" }, children), footer != null && createElement(AtlasFooter, null, footer));
 }
 function AtlasRegion({
   id,
@@ -77,8 +79,12 @@ function AtlasRegion({
 function AtlasNavigation(props) {
   return createElement("nav", { ...props, "data-atlas-navigation": "" }, createElement("div", { "data-atlas-navigation-surface": "" }, props.children));
 }
+function AtlasFooter(props) {
+  return createElement("div", { ...props, "data-atlas-footer": "" });
+}
 export {
   Atlas,
+  AtlasFooter,
   AtlasNavigation,
   AtlasRegion,
   useAtlas

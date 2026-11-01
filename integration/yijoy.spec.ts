@@ -4,6 +4,7 @@ test("Yijoy real Svelte route: edits, RTL, hover, dynamic regions and station", 
 }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/atlas-test");
   const root = page.locator("[data-atlas-demo]");
   const status = page.locator("[data-atlas-status]");
@@ -15,7 +16,7 @@ test("Yijoy real Svelte route: edits, RTL, hover, dynamic regions and station", 
   const viewport = await root.boundingBox();
   const track = await root.locator(":scope > [data-atlas-track]").boundingBox();
   expect(track!.y - viewport!.y).toBe(32);
-  expect(viewport!.y + viewport!.height - track!.y - track!.height).toBe(8);
+  expect(viewport!.y + viewport!.height - track!.y - track!.height).toBe(32);
   expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBe(
     900,
   );

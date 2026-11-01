@@ -82,6 +82,8 @@ export function createAtlas(
   root: HTMLElement,
   initial: AtlasOptions = {},
 ): AtlasController {
+  const initialAtlas = root.getAttribute("data-atlas");
+  root.setAttribute("data-atlas", "");
   const initialDirection = root.getAttribute("dir");
   const initialViewport = root.getAttribute("data-atlas-viewport");
   root.setAttribute("data-atlas-viewport", "");
@@ -97,7 +99,18 @@ export function createAtlas(
   const initialStyle = root.getAttribute("style");
   const initialPinned = root.getAttribute("data-atlas-navigation-pinned");
   const initialRail = root.getAttribute("data-atlas-reserve-leading-rail");
-  let layout = applyLayout(root, options);
+  const hasFooter = () =>
+    [
+      ...root.querySelectorAll<HTMLElement>(
+        "[data-atlas-footer], [data-atlas-footer-navigation]",
+      ),
+    ].some(
+      (node) =>
+        node.closest("[data-atlas]") === root &&
+        !node.hidden &&
+        getComputedStyle(node).display !== "none",
+    );
+  let layout = applyLayout(root, options, hasFooter());
   const track = root.querySelector<HTMLElement>("[data-atlas-track]");
   if (!track) throw new Error("Atlas requires a data-atlas-track element");
   const readRegions = () => {
@@ -377,7 +390,7 @@ export function createAtlas(
         direction: next.direction ?? options.direction,
       };
       root.dir = options.direction;
-      const nextLayout = applyLayout(root, options);
+      const nextLayout = applyLayout(root, options, hasFooter());
       const layoutChanged =
         JSON.stringify(layout) !== JSON.stringify(nextLayout);
       layout = nextLayout;
@@ -433,6 +446,7 @@ export function createAtlas(
       pagination?.dispose();
       disposed = true;
       observer.disconnect();
+      footerObserver.disconnect();
       hover.dispose();
       root.removeEventListener("keydown", keydown);
       input.dispose();
@@ -443,6 +457,7 @@ export function createAtlas(
       if (initialStyle === null) root.removeAttribute("style");
       else root.setAttribute("style", initialStyle);
       for (const [key, value] of [
+        ["data-atlas", initialAtlas],
         ["data-atlas-viewport", initialViewport],
         ["data-atlas-navigation-pinned", initialPinned],
         ["data-atlas-reserve-leading-rail", initialRail],
@@ -458,7 +473,40 @@ export function createAtlas(
     },
   };
   const overview = createOverview(controller, () => options.overview ?? true);
-  const pagination = attachPagination(controller, () => options.pagination ?? true);
+  const syncFooter = () => {
+    if (disposed) return;
+    const bottom =
+      options.insetBottom ?? (hasFooter() ? 32 : layout.gutter * 2);
+    if (layout.insetBottom === bottom) return;
+    layout.insetBottom = bottom;
+    root.style.setProperty("--atlas-inset-bottom", `${bottom}px`);
+    overview.update();
+  };
+  const footerObserver = new MutationObserver((records) => {
+    if (
+      records.some(
+        (record) =>
+          record.type === "childList" ||
+          (record.target instanceof HTMLElement &&
+            record.target.matches(
+              "[data-atlas-footer], [data-atlas-footer-navigation]",
+            )),
+      )
+    )
+      syncFooter();
+  });
+  footerObserver.observe(root, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ["hidden", "class", "style", "data-atlas-footer"],
+  });
+  const pagination = attachPagination(
+    controller,
+    () => options.pagination ?? true,
+    syncFooter,
+  );
+  syncFooter();
   return controller;
 }
 

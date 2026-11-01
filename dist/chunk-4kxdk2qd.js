@@ -1,6 +1,6 @@
 import {
   applyLayout2
-} from "./chunk-jyva3dz0.js";
+} from "./chunk-jw8ne0nx.js";
 import {
   resolveReleaseSnap2
 } from "./chunk-rpz9r67m.js";
@@ -199,7 +199,7 @@ function paginationPages(geometry) {
     return regions.length ? [{ snap, regions: regions.map((node) => node.dataset.atlasRegion) }] : [];
   });
 }
-function attachPagination(controller, options) {
+function attachPagination(controller, options, onLayout = () => {}) {
   const nav = document.createElement("nav");
   nav.dataset.atlasPageDots = "";
   const wrapper = document.createElement("div");
@@ -211,6 +211,7 @@ function attachPagination(controller, options) {
     const config = options();
     if (config === false) {
       wrapper.remove();
+      onLayout();
       return;
     }
     const target = typeof config === "object" ? config.container : undefined;
@@ -220,6 +221,7 @@ function attachPagination(controller, options) {
     const pages = paginationPages(controller.getGeometry());
     const active = controller.getState().activeRegion;
     nav.hidden = pages.length <= 1;
+    wrapper.hidden = nav.hidden;
     nav.setAttribute("aria-label", typeof config === "object" ? config.label ?? "Pages" : "Pages");
     const labels = pages.map((_, index) => typeof config === "object" ? config.pageLabel?.(index) ?? `Page ${index + 1}` : `Page ${index + 1}`);
     const next = JSON.stringify([pages, labels]);
@@ -254,6 +256,7 @@ function attachPagination(controller, options) {
       else
         button.removeAttribute("aria-current");
     });
+    onLayout();
   };
   const stop = controller.subscribe(render);
   controller.on("reInit", render);
@@ -728,6 +731,8 @@ function isViewportResize2(root, entries) {
   return entries.some((entry) => entry.target === root.querySelector("[data-atlas-track]"));
 }
 function createAtlas2(root, initial = {}) {
+  const initialAtlas = root.getAttribute("data-atlas");
+  root.setAttribute("data-atlas", "");
   const initialDirection = root.getAttribute("dir");
   const initialViewport = root.getAttribute("data-atlas-viewport");
   root.setAttribute("data-atlas-viewport", "");
@@ -739,7 +744,10 @@ function createAtlas2(root, initial = {}) {
   const initialStyle = root.getAttribute("style");
   const initialPinned = root.getAttribute("data-atlas-navigation-pinned");
   const initialRail = root.getAttribute("data-atlas-reserve-leading-rail");
-  let layout = applyLayout2(root, options);
+  const hasFooter = () => [
+    ...root.querySelectorAll("[data-atlas-footer], [data-atlas-footer-navigation]")
+  ].some((node) => node.closest("[data-atlas]") === root && !node.hidden && getComputedStyle(node).display !== "none");
+  let layout = applyLayout2(root, options, hasFooter());
   const track = root.querySelector("[data-atlas-track]");
   if (!track)
     throw new Error("Atlas requires a data-atlas-track element");
@@ -976,7 +984,7 @@ function createAtlas2(root, initial = {}) {
         direction: next.direction ?? options.direction
       };
       root.dir = options.direction;
-      const nextLayout = applyLayout2(root, options);
+      const nextLayout = applyLayout2(root, options, hasFooter());
       const layoutChanged = JSON.stringify(layout) !== JSON.stringify(nextLayout);
       layout = nextLayout;
       hover.update();
@@ -1015,6 +1023,7 @@ function createAtlas2(root, initial = {}) {
       pagination?.dispose();
       disposed = true;
       observer.disconnect();
+      footerObserver.disconnect();
       hover.dispose();
       root.removeEventListener("keydown", keydown);
       input.dispose();
@@ -1029,6 +1038,7 @@ function createAtlas2(root, initial = {}) {
       else
         root.setAttribute("style", initialStyle);
       for (const [key, value] of [
+        ["data-atlas", initialAtlas],
         ["data-atlas-viewport", initialViewport],
         ["data-atlas-navigation-pinned", initialPinned],
         ["data-atlas-reserve-leading-rail", initialRail]
@@ -1048,7 +1058,28 @@ function createAtlas2(root, initial = {}) {
     }
   };
   const overview = createOverview(controller, () => options.overview ?? true);
-  const pagination = attachPagination(controller, () => options.pagination ?? true);
+  const syncFooter = () => {
+    if (disposed)
+      return;
+    const bottom = options.insetBottom ?? (hasFooter() ? 32 : layout.gutter * 2);
+    if (layout.insetBottom === bottom)
+      return;
+    layout.insetBottom = bottom;
+    root.style.setProperty("--atlas-inset-bottom", `${bottom}px`);
+    overview.update();
+  };
+  const footerObserver = new MutationObserver((records) => {
+    if (records.some((record) => record.type === "childList" || record.target instanceof HTMLElement && record.target.matches("[data-atlas-footer], [data-atlas-footer-navigation]")))
+      syncFooter();
+  });
+  footerObserver.observe(root, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ["hidden", "class", "style", "data-atlas-footer"]
+  });
+  const pagination = attachPagination(controller, () => options.pagination ?? true, syncFooter);
+  syncFooter();
   return controller;
 }
 function observeTrackpad2(source, onAvailability, onError, intervalMs = 5000) {

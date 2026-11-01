@@ -5,6 +5,7 @@ for (const direction of ["ltr", "rtl"] as const) {
   test(`shared gutter: default, 6px, zero and restore in ${direction}`, async ({
     page,
   }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/");
     await page.waitForFunction(() => window.atlas);
     await page.evaluate((direction) => {
@@ -70,7 +71,7 @@ for (const direction of ["ltr", "rtl"] as const) {
       }
       expect(geometry.startEdge).toBeCloseTo(2 * gutter, 1);
       expect(geometry.endEdge).toBeCloseTo(2 * gutter, 1);
-      expect(geometry.bottom).toBeCloseTo(32, 1);
+      expect(geometry.bottom).toBeCloseTo(2 * gutter, 1);
       expect(geometry.contentPadding).toBe("17px");
       expect(geometry.active).toBe("workspace");
       await page.evaluate(() =>
@@ -105,9 +106,9 @@ for (const direction of ["ltr", "rtl"] as const) {
     await page.evaluate(() =>
       window.atlas.update({ insetBottom: undefined, gutter: 6 }),
     );
-    expect(await bottomSpacing()).toBe(32);
+    expect(await bottomSpacing()).toBe(12);
     await page.evaluate(() => window.atlas.update({ insetTop: 40 }));
-    expect(await bottomSpacing()).toBe(40);
+    expect(await bottomSpacing()).toBe(12);
   });
 }
 

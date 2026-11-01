@@ -33,6 +33,7 @@ export function paginationPages(geometry: AtlasGeometry) {
 export function attachPagination(
   controller: AtlasController,
   options: () => boolean | AtlasPaginationOptions,
+  onLayout: () => void = () => {},
 ) {
   const nav = document.createElement("nav");
   nav.dataset.atlasPageDots = "";
@@ -45,6 +46,7 @@ export function attachPagination(
     const config = options();
     if (config === false) {
       wrapper.remove();
+      onLayout();
       return;
     }
     const target = typeof config === "object" ? config.container : undefined;
@@ -55,6 +57,7 @@ export function attachPagination(
     const pages = paginationPages(controller.getGeometry());
     const active = controller.getState().activeRegion;
     nav.hidden = pages.length <= 1;
+    wrapper.hidden = nav.hidden;
     nav.setAttribute(
       "aria-label",
       typeof config === "object" ? (config.label ?? "Pages") : "Pages",
@@ -105,6 +108,7 @@ export function attachPagination(
         button.setAttribute("aria-current", "page");
       else button.removeAttribute("aria-current");
     });
+    onLayout();
   };
   const stop = controller.subscribe(render);
   controller.on("reInit", render);

@@ -1,7 +1,7 @@
-/** Desktop-derived defaults. Bottom spacing reserves a stable footer for page navigation. */
+/** Shared spacing: 32px top, 8px outer edges, 32px when a footer is present. */
 export declare const desktopDefaults: Readonly<{
     insetTop: 32;
-    insetBottom: 32;
+    insetBottom: 8;
     navigationWidth: 248;
     gutter: 4;
     surfaceRadius: 14;
@@ -14,7 +14,7 @@ export declare const desktopDefaults: Readonly<{
 }>;
 export interface AtlasLayoutOptions {
     insetTop?: number;
-    /** Defaults to insetTop; zero explicitly removes bottom spacing. */
+    /** Defaults to 32 with a visible footer, otherwise twice gutter. */
     insetBottom?: number;
     navigationWidth?: number;
     /** Fixed viewport margin and each region’s half-gap, in CSS pixels. */
@@ -28,7 +28,7 @@ export interface AtlasLayoutOptions {
     trailingWidth?: number;
     stationClearance?: number;
 }
-export declare function applyLayout(root: HTMLElement, options: AtlasLayoutOptions): Required<AtlasLayoutOptions>;
+export declare function applyLayout(root: HTMLElement, options: AtlasLayoutOptions, hasFooter?: boolean): Required<AtlasLayoutOptions>;
 /** 预览(编辑器)最小宽:拖到低于它当场收起(2026-07-30 用户定 400)。 */
 export declare const MIN_PREVIEW_WIDTH = 400;
 /** 聊天/对照窗格等块最小宽:再窄就没法用了,宁可总宽超出一屏、让画布横滑(2026-07-30 用户定 320)。 */

@@ -1,7 +1,7 @@
-/** Desktop-derived defaults. Bottom spacing reserves a stable footer for page navigation. */
+/** Shared spacing: 32px top, 8px outer edges, 32px when a footer is present. */
 export const desktopDefaults = Object.freeze({
   insetTop: 32,
-  insetBottom: 32,
+  insetBottom: 8,
   navigationWidth: 248,
   gutter: 4,
   surfaceRadius: 14,
@@ -14,7 +14,7 @@ export const desktopDefaults = Object.freeze({
 });
 export interface AtlasLayoutOptions {
   insetTop?: number;
-  /** Defaults to insetTop; zero explicitly removes bottom spacing. */
+  /** Defaults to 32 with a visible footer, otherwise twice gutter. */
   insetBottom?: number;
   navigationWidth?: number;
   /** Fixed viewport margin and each region’s half-gap, in CSS pixels. */
@@ -28,7 +28,11 @@ export interface AtlasLayoutOptions {
   trailingWidth?: number;
   stationClearance?: number;
 }
-export function applyLayout(root: HTMLElement, options: AtlasLayoutOptions) {
+export function applyLayout(
+  root: HTMLElement,
+  options: AtlasLayoutOptions,
+  hasFooter = false,
+) {
   const layout: Required<AtlasLayoutOptions> = { ...desktopDefaults };
   for (const key of Object.keys(
     desktopDefaults,
@@ -36,7 +40,8 @@ export function applyLayout(root: HTMLElement, options: AtlasLayoutOptions) {
     if (options[key] !== undefined)
       Object.assign(layout, { [key]: options[key] });
   }
-  layout.insetBottom = options.insetBottom ?? layout.insetTop;
+  layout.insetBottom =
+    options.insetBottom ?? (hasFooter ? 32 : layout.gutter * 2);
   const values = {
     "inset-top": layout.insetTop,
     "inset-bottom": layout.insetBottom,

@@ -122,10 +122,11 @@ for (const direction of ["ltr", "rtl"] as const) {
     // Cleanup cannot leave drag listeners that consume later input.
     await page.evaluate(() => {
       window.atlas.update({ panButton: "middle" });
+      window.atlas.root.id = "destroyed-root";
       window.atlas.destroy();
     });
     await drag("middle");
     // Controller teardown restores the root's original inline style.
-    await expect(root).toHaveCSS("cursor", "auto");
+    await expect(page.locator("#destroyed-root")).toHaveCSS("cursor", "auto");
   });
 }

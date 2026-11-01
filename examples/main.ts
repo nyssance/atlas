@@ -1,12 +1,12 @@
 import "../dist/styles.css";
 import { isStationFullyVisible } from "../dist/station";
+import { attachWindowDrag } from "../dist/tauri";
 import { connectTrackpad } from "../dist/dom";
 import type { AtlasController } from "../dist/dom";
 const mode = new URLSearchParams(location.search).get("framework") ?? "dom";
 const host = document.querySelector("#app")!;
 const content = `<div data-atlas-track><section data-atlas-region="leading" data-atlas-leading><h2>Leading</h2></section><nav data-atlas-navigation id="atlas-navigation"><div data-atlas-navigation-surface><label>Filter<input aria-label="Filter"></label></div></nav><section data-atlas-region="workspace"><h2>Workspace</h2><label>Draft<input aria-label="Draft"></label></section></div>`;
 const props = {
-  "data-atlas": "",
   "data-atlas-layout": "navigation",
   tabindex: "0",
   role: "group",
@@ -27,6 +27,7 @@ function ready(value: AtlasController) {
   Object.assign(window, {
     atlas: controller,
     connectTrackpad,
+    attachWindowDrag,
     isStationFullyVisible,
   });
   document.documentElement.dataset.ready = mode;

@@ -16,10 +16,11 @@
   min-height: 0;
   flex-shrink: 0;
 }
-:where([data-atlas]) > [data-atlas-track] > [data-atlas-region] {
-  flex-basis: var(--atlas-region-width, 100%);
+:where([data-atlas] > [data-atlas-track] > [data-atlas-region]) {
+  flex-basis: var(--atlas-region-width, auto);
+  width: 100%;
 }
-:where([data-atlas]) > [data-atlas-track] > [data-atlas-navigation] {
+:where([data-atlas] > [data-atlas-track] > [data-atlas-navigation]) {
   flex-basis: var(--atlas-navigation-width);
 }
 [data-atlas-layout="navigation"] > [data-atlas-track] > [data-atlas-region] {
@@ -34,13 +35,17 @@
 [data-atlas] {
   position: relative;
   box-sizing: border-box;
-  padding-block: var(--atlas-inset-top, 32px) var(--atlas-inset-bottom, 32px);
+  padding-block: var(--atlas-inset-top, 32px) var(--atlas-inset-bottom, 8px);
   margin-inline: var(--atlas-gutter);
   max-width: calc(100% - 2 * var(--atlas-gutter));
+  transition: padding-bottom var(--atlas-layout-duration, 300ms) ease-out;
 }
-:where([data-atlas]) > [data-atlas-track] > [data-atlas-region],
-:where([data-atlas]) > [data-atlas-track] > [data-atlas-navigation] {
+:where([data-atlas] > [data-atlas-track] > [data-atlas-region]),
+:where([data-atlas] > [data-atlas-track] > [data-atlas-navigation]) {
   position: relative;
+}
+[data-atlas] > :where([data-atlas-track]) > [data-atlas-region],
+[data-atlas] > :where([data-atlas-track]) > [data-atlas-navigation] {
   padding-inline: var(--atlas-gutter, 4px);
 }
 [data-atlas-navigation-surface] {
@@ -64,7 +69,8 @@
 [data-atlas-navigation-pinned="false"][data-atlas-layout="navigation"]
   > [data-atlas-track]
   > [data-atlas-region] {
-  flex-basis: var(--atlas-region-width, 100%);
+  flex-basis: var(--atlas-region-width, auto);
+  width: 100%;
 }
 [data-atlas-navigation-pinned="false"][data-atlas-layout="navigation"]
   > [data-atlas-track]
@@ -218,4 +224,51 @@
 [data-atlas-overview-overlay] > button:focus-visible {
   border-color: var(--ring, currentColor);
   color: var(--foreground, CanvasText);
+}
+
+/* Hosts place their status content here; page dots share the same fixed row. */
+[data-atlas-footer] {
+  position: absolute;
+  inset: auto 0 0;
+  height: var(--atlas-inset-bottom, 32px);
+  display: flex;
+  align-items: center;
+  z-index: 29;
+}
+[data-atlas-footer][hidden] {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-atlas] {
+    transition: none;
+  }
+}
+
+/* Custom geometry uses snap markers and explicitly identifies its visual panes. */
+[data-atlas-layout="custom"] > [data-atlas-track] > [data-atlas-region] {
+  padding: 0;
+}
+[data-atlas-pane] {
+  box-sizing: border-box;
+  padding-inline: var(--atlas-gutter, 4px);
+}
+[data-atlas-topbar] {
+  position: absolute;
+  inset: 0 0 auto;
+  height: var(--atlas-inset-top, 32px);
+  z-index: 31;
+  display: flex;
+  align-items: center;
+}
+
+[data-atlas-layout="sized"] > [data-atlas-track] > * {
+  flex-basis: auto;
+}
+[data-atlas-track] > [data-atlas-collapsed="true"] {
+  padding-inline: 0;
+  flex-basis: 0;
+  width: 0;
+}
+[data-atlas] > [data-atlas-track] > [data-atlas-region] > [data-atlas-pane] {
+  padding-inline: 0;
 }

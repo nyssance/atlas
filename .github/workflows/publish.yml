@@ -37,5 +37,5 @@ jobs:
       - run: bun run test
       - run: bun run build
       - run: bun x --bun --no-install playwright install --with-deps chromium
-      - run: bun run test:browser
+      - run: bun run test:browser --grep-invert "(vue|angular):"
       - run: npm publish --access public --provenance

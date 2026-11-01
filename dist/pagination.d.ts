@@ -9,7 +9,7 @@ export declare function paginationPages(geometry: AtlasGeometry): {
     regions: string[];
 }[];
 /** Default indicator, outside the moving track. Disable it to render a custom view. */
-export declare function attachPagination(controller: AtlasController, options: () => boolean | AtlasPaginationOptions): {
+export declare function attachPagination(controller: AtlasController, options: () => boolean | AtlasPaginationOptions, onLayout?: () => void): {
     render: () => void;
     dispose(): void;
 };
