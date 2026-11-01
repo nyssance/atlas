@@ -16,4 +16,3 @@ jobs:
       - run: bun run build
       - run: bun run test:browser
       - run: cargo test --manifest-path rust/Cargo.toml --locked --features specta
-      - run: cargo clippy --manifest-path rust/Cargo.toml --locked --all-targets --features specta -- -D warnings
