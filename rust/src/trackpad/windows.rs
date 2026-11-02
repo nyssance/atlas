@@ -113,8 +113,7 @@ fn handle_raw_input(h_raw_input: *mut c_void) {
             let report = unsafe {
                 std::slice::from_raw_parts(base.add(i as usize * hid.dwSizeHid as usize), hid.dwSizeHid as usize)
             };
-            if let Some(entries) = parse_report(caps, report) {
-                let (cc, list) = entries;
+            if let Some((cc, list)) = parse_report(caps, report) {
                 let Some(full) = ASSEMBLER.with(|a| a.borrow_mut().push(cc, list)) else { continue };
                 feed_frame(caps, full, ts);
             }
@@ -155,10 +154,10 @@ impl DeviceCaps {
 }
 
 fn ensure_device_caps(cache: &mut Option<DeviceCaps>, device: HANDLE) -> bool {
-    if let Some(c) = cache.as_ref() {
-        if c.handle == device {
-            return !c.slots.is_empty();
-        }
+    if let Some(c) = cache.as_ref()
+        && c.handle == device
+    {
+        return !c.slots.is_empty();
     }
     reset();
     *cache = load_device_caps(device);

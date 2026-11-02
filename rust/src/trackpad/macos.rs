@@ -3,7 +3,6 @@
 //! Each observer forwards to the superclass captured during installation.
 
 use std::cell::RefCell;
-use std::ffi::CString;
 use std::sync::OnceLock;
 
 use objc2::runtime::{AnyClass, AnyObject, Imp, Sel};
@@ -52,7 +51,7 @@ unsafe fn add_touch_methods(view: &NSView) {
     let cls = obj.class();
     SUPERCLASS.set(cls.superclass().expect("content view class has superclass")).expect("add_touch_methods ran twice");
 
-    let types = CString::new("v@:@").expect("cstring");
+    let types = c"v@:@";
     let methods: [(Sel, extern "C-unwind" fn(&AnyObject, Sel, &NSEvent)); 4] = [
         (sel!(touchesBeganWithEvent:), touches_began),
         (sel!(touchesMovedWithEvent:), touches_moved),
