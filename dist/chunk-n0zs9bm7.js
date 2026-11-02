@@ -82,6 +82,30 @@ function resolveAtlasWidths2(input) {
     terminal: input.terminalVisible ? fullOf(false) : 0
   };
 }
+function resolveAtlasBlocks2(input) {
+  const widths = {};
+  const { blocks } = input;
+  let width = input.screen;
+  for (let index = 0;index < blocks.length; ) {
+    const first = blocks[index];
+    const second = blocks[index + 1];
+    if (second) {
+      const firstWidth = first.width || (second.width ? width - second.width : Math.floor(width / 2));
+      const secondWidth = width - firstWidth;
+      if (firstWidth >= first.min && secondWidth >= second.min) {
+        widths[first.name] = firstWidth;
+        widths[second.name] = secondWidth;
+        index += 2;
+        width = input.nextScreen;
+        continue;
+      }
+    }
+    widths[first.name] = Math.max(first.min, width);
+    index += 1;
+    width = input.nextScreen;
+  }
+  return widths;
+}
 function resolveSplitGeometry2(input) {
   const { viewport, navigation, pinned, chat, preview } = input;
   const leading = Math.max(0, viewport - navigation);
@@ -105,4 +129,4 @@ function resolveSplitWidths2(viewportWidth, previewVisible, previewWidth, fullVi
   return { chat: full, preview: Math.max(MIN_BLOCK_WIDTH2, fullViewportWidth) };
 }
 
-export { desktopDefaults2, applyLayout2, MIN_PREVIEW_WIDTH2, MIN_BLOCK_WIDTH2, resolveAtlasWidths2, resolveSplitGeometry2, resolveSplitWidths2 };
+export { desktopDefaults2, applyLayout2, MIN_PREVIEW_WIDTH2, MIN_BLOCK_WIDTH2, resolveAtlasWidths2, resolveAtlasBlocks2, resolveSplitGeometry2, resolveSplitWidths2 };

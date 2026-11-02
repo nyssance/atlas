@@ -4,14 +4,16 @@ import {
   MIN_PREVIEW_WIDTH2,
   MIN_BLOCK_WIDTH2,
   resolveAtlasWidths2,
+  resolveAtlasBlocks2,
   resolveSplitGeometry2,
   resolveSplitWidths2
-} from "./chunk-jw8ne0nx.js";
+} from "./chunk-n0zs9bm7.js";
 export {
   MIN_BLOCK_WIDTH2 as MIN_BLOCK_WIDTH,
   MIN_PREVIEW_WIDTH2 as MIN_PREVIEW_WIDTH,
   applyLayout2 as applyLayout,
   desktopDefaults2 as desktopDefaults,
+  resolveAtlasBlocks2 as resolveAtlasBlocks,
   resolveAtlasWidths2 as resolveAtlasWidths,
   resolveSplitGeometry2 as resolveSplitGeometry,
   resolveSplitWidths2 as resolveSplitWidths

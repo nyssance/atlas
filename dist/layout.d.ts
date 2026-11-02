@@ -55,6 +55,24 @@ export declare function resolveAtlasWidths(input: {
     sidePaneCount: number;
     terminalVisible: boolean;
 }): AtlasWidths;
+/** A block on the canvas, named by the host: its minimum width and, if the user set one, its requested width. */
+export interface AtlasBlock<Name extends string = string> {
+    name: Name;
+    min: number;
+    width?: number;
+}
+/**
+ * Lays out ordered blocks screen by screen. Two neighbours share a screen while both keep their minimums (a
+ * requested width on either sets the split, otherwise they halve it); a block that cannot share takes a screen
+ * whole and its neighbour moves on to the next screen.
+ */
+export declare function resolveAtlasBlocks<Name extends string>(input: {
+    /** Width of the first screen (viewport minus a pinned navigation). */
+    screen: number;
+    /** Width of the following screens (the viewport). */
+    nextScreen: number;
+    blocks: readonly AtlasBlock<Name>[];
+}): Record<Name, number>;
 export declare function resolveSplitGeometry(input: {
     viewport: number;
     navigation: number;

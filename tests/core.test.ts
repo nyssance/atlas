@@ -2,6 +2,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { resolveReleaseSnap } from "../src/core";
+import { resolveAtlasBlocks } from "../src/layout";
 
 /** 三屏画布:snap 坐标 = 引擎 translate(负值),一屏 = 视口 1000px,轻划阈 = 150px。 */
 const SNAPS = [0, -1000, -2000] as const;
@@ -89,4 +90,31 @@ test("empty layout is rejected", () => {
       viewportWidth: 100,
     }),
   ).toThrow();
+});
+
+describe("resolveAtlasBlocks", () => {
+  const layout = (width?: number) =>
+    resolveAtlasBlocks({
+      screen: 1000,
+      nextScreen: 1250,
+      blocks: [
+        { name: "a", min: 320 },
+        { name: "b", min: 400, width },
+      ],
+    });
+  test("two blocks split the first screen evenly by default", () => {
+    expect(layout()).toEqual({ a: 500, b: 500 });
+  });
+  test("a requested width sets the split while both keep their minimums", () => {
+    expect(layout(600)).toEqual({ a: 400, b: 600 });
+  });
+  test("a block below its minimum moves to the next screen whole", () => {
+    expect(layout(300)).toEqual({ a: 1000, b: 1250 });
+  });
+  test("a block that squeezes its neighbour moves to the next screen whole", () => {
+    expect(layout(800)).toEqual({ a: 1000, b: 1250 });
+  });
+  test("a lone block fills its screen", () => {
+    expect(resolveAtlasBlocks({ screen: 1000, nextScreen: 1250, blocks: [{ name: "a", min: 320 }] })).toEqual({ a: 1000 });
+  });
 });

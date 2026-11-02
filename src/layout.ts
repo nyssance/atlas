@@ -156,6 +156,50 @@ export function resolveAtlasWidths(input: {
   };
 }
 
+/** A block on the canvas, named by the host: its minimum width and, if the user set one, its requested width. */
+export interface AtlasBlock<Name extends string = string> {
+  name: Name;
+  min: number;
+  width?: number;
+}
+
+/**
+ * Lays out ordered blocks screen by screen. Two neighbours share a screen while both keep their minimums (a
+ * requested width on either sets the split, otherwise they halve it); a block that cannot share takes a screen
+ * whole and its neighbour moves on to the next screen.
+ */
+export function resolveAtlasBlocks<Name extends string>(input: {
+  /** Width of the first screen (viewport minus a pinned navigation). */
+  screen: number;
+  /** Width of the following screens (the viewport). */
+  nextScreen: number;
+  blocks: readonly AtlasBlock<Name>[];
+}): Record<Name, number> {
+  const widths = {} as Record<Name, number>;
+  const { blocks } = input;
+  let width = input.screen;
+  for (let index = 0; index < blocks.length; ) {
+    const first = blocks[index]!;
+    const second = blocks[index + 1];
+    if (second) {
+      const firstWidth =
+        first.width || (second.width ? width - second.width : Math.floor(width / 2));
+      const secondWidth = width - firstWidth;
+      if (firstWidth >= first.min && secondWidth >= second.min) {
+        widths[first.name] = firstWidth;
+        widths[second.name] = secondWidth;
+        index += 2;
+        width = input.nextScreen;
+        continue;
+      }
+    }
+    widths[first.name] = Math.max(first.min, width);
+    index += 1;
+    width = input.nextScreen;
+  }
+  return widths;
+}
+
 // Adapted from Desktop's Atlas sizing and release policy.
 export function resolveSplitGeometry(input: {
   viewport: number;

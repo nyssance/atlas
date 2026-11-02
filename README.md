@@ -84,7 +84,7 @@ Use `regions` to select existing snap markers, `groupRegions: false` for one mar
 
 Call `suspend()` before an overview animation takes ownership of the track transform, then `resume()` after it restores the normal geometry. Input is blocked while suspended. `onNavigationChange` reports transient floating visibility without changing the persisted `navigationPinned` preference. The navigation surface can contain the host’s shadcn menu, custom buttons or any other components; Atlas neither clones it nor replaces its styles.
 
-`@nyssance/atlas/layout` also exports the extracted Desktop `resolveAtlasWidths` and U `resolveSplitGeometry`/`resolveSplitWidths` policies for applications sharing those layouts.
+`@nyssance/atlas/layout` exports `resolveAtlasBlocks`, which lays out host-named blocks in order (neighbours share a screen while both keep their minimums, otherwise the next one moves to the following screen whole), and also the extracted Desktop `resolveAtlasWidths` and U `resolveSplitGeometry`/`resolveSplitWidths` policies for applications sharing those layouts.
 
 ### Pet rest station
 
