@@ -810,8 +810,11 @@ function createAtlas2(root, initial = {}) {
           hidden: node.getAttribute("aria-hidden")
         });
       const visible = visibleRegions.includes(node.dataset.atlasRegion);
-      node.inert = !visible;
-      node.setAttribute("aria-hidden", String(!visible));
+      if (node.inert !== !visible)
+        node.inert = !visible;
+      const hidden = String(!visible);
+      if (node.getAttribute("aria-hidden") !== hidden)
+        node.setAttribute("aria-hidden", hidden);
     }
     if (state.activeRegion === activeRegion && state.moving === moving && state.visibleRegions.join("\x00") === visibleRegions.join("\x00"))
       return;

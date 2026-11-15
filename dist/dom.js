@@ -3,7 +3,7 @@ import {
   createAtlas2,
   observeTrackpad2,
   connectTrackpad2
-} from "./chunk-5s2rxxtf.js";
+} from "./chunk-vnam4p2t.js";
 import"./chunk-rpz9r67m.js";
 import"./chunk-n0zs9bm7.js";
 export {

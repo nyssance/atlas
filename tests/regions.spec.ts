@@ -66,3 +66,34 @@ for (const direction of ["ltr", "rtl"] as const) {
     await expect(root).toHaveAttribute("data-atlas-navigation-pinned", "false");
   });
 }
+
+test("animation does not repeatedly invalidate region accessibility attributes", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator("html")).toHaveAttribute("data-ready", "dom");
+  const result = await page.evaluate(async () => {
+    window.atlas.goTo("workspace", { instant: true });
+    const regions = window.atlas.getGeometry().regions.filter(node => node.dataset.atlasRegion);
+    const records: MutationRecord[] = [];
+    const observer = new MutationObserver(batch => records.push(...batch));
+    for (const node of regions)
+      observer.observe(node, { attributes: true, attributeFilter: ["inert", "aria-hidden"] });
+    window.atlas.goTo("leading");
+    await new Promise<void>(resolve => {
+      const poll = () => window.atlas.getState().moving ? requestAnimationFrame(poll) : resolve();
+      requestAnimationFrame(poll);
+    });
+    records.push(...observer.takeRecords());
+    observer.disconnect();
+    return {
+      mutations: records.length,
+      regionCount: regions.length,
+      active: window.atlas.getState().activeRegion,
+      accessibilityMatches: regions.every(node =>
+        node.inert === !window.atlas.getState().visibleRegions.includes(node.dataset.atlasRegion!) &&
+        node.getAttribute("aria-hidden") === String(node.inert)),
+    };
+  });
+  expect(result.active).toBe("leading");
+  expect(result.accessibilityMatches).toBe(true);
+  expect(result.mutations).toBeLessThanOrEqual(result.regionCount * 2);
+});
