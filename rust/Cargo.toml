@@ -14,11 +14,11 @@ include = ["src/**", "Cargo.toml", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.
 specta = ["dep:specta", "dep:tauri3-specta"]
 
 [dependencies]
-tauri = "3.0.0-alpha.5"
+tauri = "3.0.0-alpha.6"
 serde = { version = "1", features = ["derive"] }
 log = "0.4"
 specta = { version = "2.0.0-rc.27", optional = true }
-tauri3-specta = { version = "0.1.0-alpha.3", optional = true }
+tauri3-specta = { version = "0.1.0-alpha.5", optional = true }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.6"
