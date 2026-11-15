@@ -1,16 +1,12 @@
 {
+  "extends": "@nyssance/tsconfig",
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx",
-    "strict": true,
-    "skipLibCheck": true,
-    "declaration": true,
-    "outDir": "dist",
     "types": ["bun"],
-    "isolatedModules": true,
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "outDir": "dist",
     "rootDir": "src"
   },
   "include": ["src"]
