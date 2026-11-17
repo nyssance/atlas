@@ -1,7 +1,7 @@
 import"./chunk-n0zs9bm7.js";
 import {
   createAtlas2
-} from "./chunk-vnam4p2t.js";
+} from "./chunk-ajytj6mf.js";
 import"./chunk-rpz9r67m.js";
 
 // src/angular.ts

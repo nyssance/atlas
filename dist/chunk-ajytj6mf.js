@@ -191,7 +191,7 @@ function createOverview(controller, options) {
 function paginationPages(geometry) {
   return geometry.groups.flatMap((group, snap) => {
     const regions = group.map((index) => geometry.regions[index]).filter((node) => {
-      if (!node.hasAttribute("data-atlas-region") || node.hasAttribute("data-atlas-navigation"))
+      if (!node.hasAttribute("data-atlas-region") || node.hasAttribute("data-atlas-navigation") || node.getAttribute("data-atlas-collapsed") === "true")
         return false;
       const explicit = node.getAttribute("data-atlas-pagination");
       return explicit === "true" || explicit !== "false" && !node.hasAttribute("data-atlas-leading") && !node.hasAttribute("data-atlas-trailing");
@@ -266,6 +266,7 @@ function attachPagination(controller, options, onLayout = () => {}) {
     attributes: true,
     attributeFilter: [
       "data-atlas-pagination",
+      "data-atlas-collapsed",
       "data-atlas-leading",
       "data-atlas-trailing"
     ]

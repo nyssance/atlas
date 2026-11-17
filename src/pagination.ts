@@ -10,9 +10,11 @@ export function paginationPages(geometry: AtlasGeometry) {
     const regions = group
       .map((index) => geometry.regions[index])
       .filter((node) => {
+        // A collapsed region shows nothing, so it never makes a screen a page of its own.
         if (
           !node.hasAttribute("data-atlas-region") ||
-          node.hasAttribute("data-atlas-navigation")
+          node.hasAttribute("data-atlas-navigation") ||
+          node.getAttribute("data-atlas-collapsed") === "true"
         )
           return false;
         const explicit = node.getAttribute("data-atlas-pagination");
@@ -118,6 +120,7 @@ export function attachPagination(
     attributes: true,
     attributeFilter: [
       "data-atlas-pagination",
+      "data-atlas-collapsed",
       "data-atlas-leading",
       "data-atlas-trailing",
     ],

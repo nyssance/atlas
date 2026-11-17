@@ -32,6 +32,17 @@ test("default pagination excludes auxiliary regions and follows selection", asyn
       .setAttribute("data-atlas-pagination", "true");
   });
   await expect(dots).toHaveCount(3);
+  // A collapsed region beside the leading screen does not give it a page.
+  await page.evaluate(() => {
+    window.atlas.track
+      .querySelector("[data-atlas-leading]")!
+      .removeAttribute("data-atlas-pagination");
+    window.atlas.track
+      .querySelector('[data-atlas-region="second"]')!
+      .setAttribute("data-atlas-collapsed", "true");
+  });
+  await expect(dots).toHaveCount(1);
+  await expect(page.locator("[data-atlas-page-dots]")).toBeHidden();
   await page.evaluate(() => window.atlas.update({ pagination: false }));
   await expect(page.locator("[data-atlas-footer-navigation]")).toHaveCount(0);
   await page.evaluate(() => window.atlas.destroy());
