@@ -7,7 +7,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: canary
+          bun-version: 1.4.5
       - uses: dtolnay/rust-toolchain@stable
       - run: bun install --frozen-lockfile
       - run: bun x --bun --no-install playwright install chromium
