@@ -1072,8 +1072,10 @@ function createAtlas2(root, initial = {}) {
     root.style.setProperty("--atlas-inset-bottom", `${bottom}px`);
     overview.update();
   };
+  const footerSelector = "[data-atlas-footer], [data-atlas-footer-navigation]";
+  const holdsFooter = (nodes) => [...nodes].some((node) => node instanceof Element && (node.matches(footerSelector) || node.querySelector(footerSelector) !== null));
   const footerObserver = new MutationObserver((records) => {
-    if (records.some((record) => record.type === "childList" || record.target instanceof HTMLElement && record.target.matches("[data-atlas-footer], [data-atlas-footer-navigation]")))
+    if (records.some((record) => record.type === "childList" ? holdsFooter(record.addedNodes) || holdsFooter(record.removedNodes) : record.attributeName === "data-atlas-footer" || record.target instanceof Element && record.target.matches(footerSelector)))
       syncFooter();
   });
   footerObserver.observe(root, {

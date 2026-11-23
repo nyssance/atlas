@@ -22,6 +22,40 @@ for (const framework of ["dom", "react", "svelte"]) {
       "height",
       "32px",
     );
+    // Content changes that cannot affect a footer must not read computed style: that read
+    // forces a synchronous style recalculation in the page for every such change.
+    const reads = await page.evaluate(async () => {
+      const original = window.getComputedStyle;
+      const frame = () =>
+        new Promise((resolve) => requestAnimationFrame(resolve));
+      let count = 0;
+      window.getComputedStyle = (...args) => {
+        count++;
+        return original(...args);
+      };
+      const region = window.atlas.track.firstElementChild!;
+      const text = document.createTextNode("typed");
+      region.append(text);
+      text.replaceWith(document.createTextNode("typed again"));
+      const span = document.createElement("span");
+      region.append(span);
+      span.className = "changed";
+      span.remove();
+      await frame();
+      const unrelated = count;
+      const marked = document.createElement("div");
+      region.append(marked);
+      await frame();
+      marked.setAttribute("data-atlas-footer", "");
+      await frame();
+      const becameFooter = count - unrelated;
+      marked.remove();
+      await frame();
+      window.getComputedStyle = original;
+      return { unrelated, becameFooter };
+    });
+    expect(reads.unrelated).toBe(0);
+    expect(reads.becameFooter).toBeGreaterThan(0);
     await page.evaluate(() => {
       window.atlas.root.querySelector<HTMLElement>(
         "[data-atlas-footer]",

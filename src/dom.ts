@@ -484,15 +484,25 @@ export function createAtlas(
     root.style.setProperty("--atlas-inset-bottom", `${bottom}px`);
     overview.update();
   };
+  const footerSelector = "[data-atlas-footer], [data-atlas-footer-navigation]";
+  const holdsFooter = (nodes: NodeList) =>
+    [...nodes].some(
+      (node) =>
+        node instanceof Element &&
+        (node.matches(footerSelector) ||
+          node.querySelector(footerSelector) !== null),
+    );
+  // Only a change that can add, remove, show or hide a footer reads its computed style.
+  // Reading it on every child-list change forced a synchronous style recalculation for
+  // each text node an application replaced, which a text field does on every keystroke.
   const footerObserver = new MutationObserver((records) => {
     if (
-      records.some(
-        (record) =>
-          record.type === "childList" ||
-          (record.target instanceof HTMLElement &&
-            record.target.matches(
-              "[data-atlas-footer], [data-atlas-footer-navigation]",
-            )),
+      records.some((record) =>
+        record.type === "childList"
+          ? holdsFooter(record.addedNodes) || holdsFooter(record.removedNodes)
+          : record.attributeName === "data-atlas-footer" ||
+            (record.target instanceof Element &&
+              record.target.matches(footerSelector)),
       )
     )
       syncFooter();
