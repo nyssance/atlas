@@ -119,11 +119,11 @@ test("footer double click toggles generic overview without branding", async ({ p
   await page.goto("/");
   await expect(page.locator("html")).toHaveAttribute("data-ready", "dom");
   const bounds = (await page.locator("[data-atlas]").first().boundingBox())!;
-  await page.mouse.dblclick(bounds.x + 12, bounds.y + bounds.height - 8);
+  await page.mouse.dblclick(bounds.x + 12, bounds.y + bounds.height - 3);
   expect(await page.evaluate(() => window.atlas.overview.getState())).not.toBeNull();
   await expect(page.locator("[data-atlas-overview-overlay]")).toBeVisible();
   await expect(page.getByText("ALwith the best AI agent", { exact: false })).toHaveCount(0);
-  await page.mouse.dblclick(bounds.x + 12, bounds.y + bounds.height - 8);
+  await page.mouse.dblclick(bounds.x + 12, bounds.y + bounds.height - 3);
   expect(await page.evaluate(() => window.atlas.overview.getState())).toBeNull();
 });
 

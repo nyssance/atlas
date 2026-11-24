@@ -22,7 +22,7 @@ for (const direction of ["ltr", "rtl"] as const) {
     await page
       .getByRole("textbox", { name: "Draft" })
       .fill("keep this content");
-    for (const [index, gutter] of [4, 6, 0, 4].entries()) {
+    for (const [index, gutter] of [3, 6, 0, 3].entries()) {
       if (index > 0) {
         await page.evaluate(
           (gutter) => window.atlas.update({ gutter }),
@@ -99,7 +99,7 @@ for (const direction of ["ltr", "rtl"] as const) {
       window.atlas.update({ insetBottom: 20, gutter: 6 }),
     );
     expect(await bottomSpacing()).toBe(20);
-    await page.evaluate(() => window.atlas.update({ gutter: 4 }));
+    await page.evaluate(() => window.atlas.update({ gutter: 3 }));
     expect(await bottomSpacing()).toBe(20);
     await page.evaluate(() => window.atlas.update({ insetBottom: 0 }));
     expect(await bottomSpacing()).toBe(0);
@@ -145,7 +145,30 @@ test("surface radius is configurable without consuming region gutters", async ({
     });
     expect(geometry.radius).toBe(`${radius}px`);
     expect(geometry.overflow).toBe("clip");
-    expect(geometry.gap).toBe(4);
+    expect(geometry.gap).toBe(3);
     expect(geometry.top).toBe("32px");
   }
+});
+
+test("a gutter narrower than the snap tolerance is refused", async ({ page }) => {
+  await page.goto("/");
+  await page.waitForFunction(() => window.atlas);
+  for (const gutter of [1, 2, 2.9]) {
+    const error = await page.evaluate((gutter) => {
+      try {
+        window.atlas.update({ gutter });
+        return null;
+      } catch (error) {
+        return String(error);
+      }
+    }, gutter);
+    expect(error).toContain("Invalid Atlas gutter");
+  }
+  const applied = () =>
+    page
+      .locator("[data-atlas]")
+      .evaluate((root) => (root as HTMLElement).style.getPropertyValue("--atlas-gutter"));
+  expect(await applied()).toBe("3px");
+  await page.evaluate(() => window.atlas.update({ gutter: 0 }));
+  expect(await applied()).toBe("0px");
 });

@@ -1,6 +1,6 @@
 import { animate } from "motion";
 import type { EmblaCarouselType } from "embla-carousel";
-import type { AtlasLayoutOptions } from "./layout";
+import { desktopDefaults, type AtlasLayoutOptions } from "./layout";
 
 /** Adapted from Desktop Atlas navigation hover: same mounted surface, 4px edge,
  * 100ms trigger intent, 8px/0.5s spring, popup and pointer-capture retention. */
@@ -94,7 +94,7 @@ export function attachHoverNavigation(
       navigation.dataset.atlasFloating = "";
       root.dataset.atlasNavigationPeeking = "";
       surface.style.translate = `${offset}px 0`;
-      surface.style.width = `${(options().navigationWidth ?? 248) + 4 * (options().gutter ?? 4)}px`;
+      surface.style.width = `${(options().navigationWidth ?? desktopDefaults.navigationWidth) + 4 * (options().gutter ?? desktopDefaults.gutter)}px`;
       surface.style.opacity = "0";
       surface.style.transform = `translateX(${rtl ? 8 : -8}px)`;
       floating = true;
@@ -136,7 +136,7 @@ export function attachHoverNavigation(
           ? bounds.right - pointerX
           : pointerX - bounds.left;
     const edge =
-      x !== null && x >= 0 && x <= Math.max(4, options().gutter ?? 4);
+      x !== null && x >= 0 && x <= Math.max(4, options().gutter ?? desktopDefaults.gutter);
     if (blockedUntilLeave) {
       blockedUntilLeave = edge || triggerHovered;
       if (blockedUntilLeave) return;
@@ -144,7 +144,7 @@ export function attachHoverNavigation(
     const inside =
       x !== null &&
       x >= 0 &&
-      x <= (options().navigationWidth ?? 248) + 3 * (options().gutter ?? 4);
+      x <= (options().navigationWidth ?? desktopDefaults.navigationWidth) + 3 * (options().gutter ?? desktopDefaults.gutter);
     if (triggerReady && !inside) approachFromX = x;
     else if (
       inside ||

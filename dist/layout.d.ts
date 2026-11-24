@@ -1,9 +1,9 @@
-/** Shared spacing: 32px top, 8px outer edges, 32px when a footer is present. */
+/** Shared spacing: 32px top, 6px outer edges, 32px when a footer is present. */
 export declare const desktopDefaults: Readonly<{
     insetTop: 32;
-    insetBottom: 8;
+    insetBottom: 6;
     navigationWidth: 248;
-    gutter: 4;
+    gutter: 3;
     surfaceRadius: 14;
     navigationPinned: true;
     hoverNavigation: true;
@@ -17,7 +17,7 @@ export interface AtlasLayoutOptions {
     /** Defaults to 32 with a visible footer, otherwise twice gutter. */
     insetBottom?: number;
     navigationWidth?: number;
-    /** Fixed viewport margin and each region’s half-gap, in CSS pixels. */
+    /** Fixed viewport margin and each region’s half-gap, in CSS pixels: 0, or at least 3. */
     gutter?: number;
     /** Radius of surfaces inside regions; gutters remain outside the clipped surface. */
     surfaceRadius?: number;

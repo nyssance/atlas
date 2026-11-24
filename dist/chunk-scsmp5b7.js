@@ -1,6 +1,7 @@
 import {
+  desktopDefaults2,
   applyLayout2
-} from "./chunk-n0zs9bm7.js";
+} from "./chunk-tzzt0w8k.js";
 import {
   resolveReleaseSnap2
 } from "./chunk-rpz9r67m.js";
@@ -354,7 +355,7 @@ function attachHoverNavigation(root, api, options, blocked, onChange) {
       navigation.dataset.atlasFloating = "";
       root.dataset.atlasNavigationPeeking = "";
       surface.style.translate = `${offset}px 0`;
-      surface.style.width = `${(options().navigationWidth ?? 248) + 4 * (options().gutter ?? 4)}px`;
+      surface.style.width = `${(options().navigationWidth ?? desktopDefaults2.navigationWidth) + 4 * (options().gutter ?? desktopDefaults2.gutter)}px`;
       surface.style.opacity = "0";
       surface.style.transform = `translateX(${rtl ? 8 : -8}px)`;
       floating = true;
@@ -395,13 +396,13 @@ function attachHoverNavigation(root, api, options, blocked, onChange) {
     const bounds = root.getBoundingClientRect();
     const rtl = getComputedStyle(root).direction === "rtl";
     const x = pointerX === null ? null : rtl ? bounds.right - pointerX : pointerX - bounds.left;
-    const edge = x !== null && x >= 0 && x <= Math.max(4, options().gutter ?? 4);
+    const edge = x !== null && x >= 0 && x <= Math.max(4, options().gutter ?? desktopDefaults2.gutter);
     if (blockedUntilLeave) {
       blockedUntilLeave = edge || triggerHovered;
       if (blockedUntilLeave)
         return;
     }
-    const inside = x !== null && x >= 0 && x <= (options().navigationWidth ?? 248) + 3 * (options().gutter ?? 4);
+    const inside = x !== null && x >= 0 && x <= (options().navigationWidth ?? desktopDefaults2.navigationWidth) + 3 * (options().gutter ?? desktopDefaults2.gutter);
     if (triggerReady && !inside)
       approachFromX = x;
     else if (inside || x === null || approachFromX === null || x > approachFromX)

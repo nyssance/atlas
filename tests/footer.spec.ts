@@ -10,7 +10,7 @@ for (const framework of ["dom", "react", "svelte"]) {
     await expect(page.locator("html")).toHaveAttribute("data-ready", framework);
     const root = page.locator("[data-atlas]");
     await expect(root).toHaveCSS("padding-top", "32px");
-    await expect(root).toHaveCSS("padding-bottom", "8px");
+    await expect(root).toHaveCSS("padding-bottom", "6px");
     await page.evaluate(() => {
       const footer = document.createElement("footer");
       footer.dataset.atlasFooter = "";
@@ -61,7 +61,7 @@ for (const framework of ["dom", "react", "svelte"]) {
         "[data-atlas-footer]",
       )!.hidden = true;
     });
-    await expect(root).toHaveCSS("padding-bottom", "8px");
+    await expect(root).toHaveCSS("padding-bottom", "6px");
     await page.evaluate(() => {
       window.atlas.root.querySelector<HTMLElement>(
         "[data-atlas-footer]",
@@ -83,7 +83,7 @@ for (const framework of ["dom", "react", "svelte"]) {
         .remove();
       window.atlas.refresh();
     });
-    await expect(root).toHaveCSS("padding-bottom", "8px");
+    await expect(root).toHaveCSS("padding-bottom", "6px");
     await page.evaluate(() => {
       const node = window.atlas.root;
       window.atlas.destroy();

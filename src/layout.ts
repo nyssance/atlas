@@ -1,9 +1,9 @@
-/** Shared spacing: 32px top, 8px outer edges, 32px when a footer is present. */
+/** Shared spacing: 32px top, 6px outer edges, 32px when a footer is present. */
 export const desktopDefaults = Object.freeze({
   insetTop: 32,
-  insetBottom: 8,
+  insetBottom: 6,
   navigationWidth: 248,
-  gutter: 4,
+  gutter: 3,
   surfaceRadius: 14,
   navigationPinned: true,
   hoverNavigation: true,
@@ -17,7 +17,7 @@ export interface AtlasLayoutOptions {
   /** Defaults to 32 with a visible footer, otherwise twice gutter. */
   insetBottom?: number;
   navigationWidth?: number;
-  /** Fixed viewport margin and each region’s half-gap, in CSS pixels. */
+  /** Fixed viewport margin and each region’s half-gap, in CSS pixels: 0, or at least 3. */
   gutter?: number;
   /** Radius of surfaces inside regions; gutters remain outside the clipped surface. */
   surfaceRadius?: number;
@@ -55,6 +55,10 @@ export function applyLayout(
   for (const [key, value] of Object.entries(values)) {
     if (!Number.isFinite(value) || value < 0)
       throw new Error(`Invalid Atlas ${key}`);
+    // The leading region and the navigation overflow the viewport by one gutter, and regions that overflow it by
+    // no more than 2px share a snap: a narrower gutter would merge the leading screen into the one after it.
+    if (key === "gutter" && value > 0 && value < 3)
+      throw new Error("Invalid Atlas gutter: use 0, or at least 3");
     root.style.setProperty(`--atlas-${key}`, `${value}px`);
   }
   root.dataset.atlasNavigationPinned = String(layout.navigationPinned);

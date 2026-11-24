@@ -28,14 +28,14 @@ for (const direction of ["ltr", "rtl"] as const) {
     const padding = await page
       .locator("[data-atlas-leading]")
       .evaluate((node) => getComputedStyle(node).paddingInlineStart);
-    expect(padding).toBe("56px");
+    expect(padding).toBe("55px");
     const rail = await page.locator("[data-atlas-leading-rail]").boundingBox();
     const leading = await page.locator("[data-atlas-leading]").boundingBox();
     expect(
       direction === "ltr"
         ? rail!.x - leading!.x
         : leading!.x + leading!.width - rail!.x - rail!.width,
-    ).toBeCloseTo(4);
+    ).toBeCloseTo(3);
     await page.evaluate(() => window.atlas.goTo("station", { instant: true }));
     const station = page.locator("[data-atlas-station]");
     const original = await station.boundingBox();

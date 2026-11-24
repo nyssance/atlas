@@ -1,9 +1,9 @@
 // src/layout.ts
 var desktopDefaults2 = Object.freeze({
   insetTop: 32,
-  insetBottom: 8,
+  insetBottom: 6,
   navigationWidth: 248,
-  gutter: 4,
+  gutter: 3,
   surfaceRadius: 14,
   navigationPinned: true,
   hoverNavigation: true,
@@ -32,6 +32,8 @@ function applyLayout2(root, options, hasFooter = false) {
   for (const [key, value] of Object.entries(values)) {
     if (!Number.isFinite(value) || value < 0)
       throw new Error(`Invalid Atlas ${key}`);
+    if (key === "gutter" && value > 0 && value < 3)
+      throw new Error("Invalid Atlas gutter: use 0, or at least 3");
     root.style.setProperty(`--atlas-${key}`, `${value}px`);
   }
   root.dataset.atlasNavigationPinned = String(layout.navigationPinned);
